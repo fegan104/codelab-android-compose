@@ -51,7 +51,7 @@ data class Promotion<C : VegasQueryDataSource>(
     val id: String,
     val actionUrl: String?,
     val rules: List<Rule<C, *, *, *>>,
-    val creativeTreatments: List<CreativeTreatmentData>
+    val creativeTreatments: List<Creative>
 )
 
 /**
@@ -59,7 +59,7 @@ data class Promotion<C : VegasQueryDataSource>(
  * Uses @Serializable for automatic JSON parsing.
  */
 @Serializable
-data class CreativeTreatmentData(
+data class Creative(
     val id: String,
     val heroImageUrl: String? = null,
     val titleText: String? = null,
@@ -79,7 +79,7 @@ internal data class PromotionJson(
     val id: String,
     val actionUrl: String? = null,
     @SerialName("rulesV2") val rules: JsonArray = JsonArray(emptyList()),
-    val creativeTreatments: List<CreativeTreatmentData> = emptyList()
+    val creativeTreatments: List<Creative> = emptyList()
 )
 
 /**
