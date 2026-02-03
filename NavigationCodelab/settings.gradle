@@ -16,4 +16,5 @@
 
 include ':app'
 include ':vegas-core'
+include ':vegas-compiler'
 rootProject.name = "Rally"
