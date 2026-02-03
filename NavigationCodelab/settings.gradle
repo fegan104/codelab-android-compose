@@ -27,4 +27,5 @@ includeBuild('vegas-core') {
 }
 
 include ':app'
+include ':vegas-ui'
 rootProject.name = "Rally"

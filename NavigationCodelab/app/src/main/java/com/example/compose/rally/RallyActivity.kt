@@ -35,7 +35,7 @@ import com.example.compose.rally.ui.components.RallyTabRow
 import com.example.compose.rally.ui.theme.RallyTheme
 import com.example.compose.rally.generated.GeneratedVegasDataSource
 import com.example.compose.rally.generated.GeneratedVegasSourceKeyRegistry
-import com.example.compose.rally.ui.components.PromotionCreative
+import com.fitnow.vegas.ui.PromotionCreative
 import com.fitnow.vegas.core.Promotion
 import com.fitnow.vegas.core.VegasPromotionGroupParser
 import com.fitnow.vegas.core.VegasRuleParser
