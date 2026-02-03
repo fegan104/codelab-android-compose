@@ -6,9 +6,6 @@ plugins {
     id 'java-gradle-plugin'
 }
 
-group = 'com.fitnow.vegas'
-version = '1.0.0'
-
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
@@ -32,11 +29,6 @@ gradlePlugin {
             implementationClass = 'com.fitnow.vegas.compiler.VegasPlugin'
         }
     }
-}
-
-// Handle duplicate resources from gradle-plugin generation
-tasks.named('processResources', ProcessResources) {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 dependencies {
