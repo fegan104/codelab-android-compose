@@ -21,12 +21,10 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import kotlinx.serialization.json.longOrNull
 
 /**
  * Parser for Vegas rules from JSON format.
@@ -80,8 +78,7 @@ class VegasRuleParser<C : VegasQueryDataSource>(
      * @throws IllegalArgumentException if the JSON format is invalid
      */
     fun parse(jsonString: String): List<Rule<C, *, *, *>> {
-        val element = json.parseToJsonElement(jsonString)
-        val rulesArray = when (element) {
+        val rulesArray = when (val element = json.parseToJsonElement(jsonString)) {
             is JsonArray -> element
             is JsonObject -> findRulesArray(element)
             else -> throw IllegalArgumentException("Expected JSON array or object with rules array")
@@ -125,20 +122,7 @@ class VegasRuleParser<C : VegasQueryDataSource>(
                 defaultElement,
                 source
             )
-            is LongSourceKey<*, *> -> createLongRule(
-                sourceKey as SourceKey<C, QuerySource, Long>,
-                operatorName,
-                valueElement,
-                defaultElement,
-                source
-            )
-            is DoubleSourceKey<*, *> -> createDoubleRule(
-                sourceKey as SourceKey<C, QuerySource, Double>,
-                operatorName,
-                valueElement,
-                defaultElement,
-                source
-            )
+
             is StringSourceKey<*, *> -> createStringRule(
                 sourceKey as SourceKey<C, QuerySource, String>,
                 operatorName,
@@ -146,6 +130,7 @@ class VegasRuleParser<C : VegasQueryDataSource>(
                 defaultElement,
                 source
             )
+
             is BooleanSourceKey<*, *> -> createBooleanRule(
                 sourceKey as SourceKey<C, QuerySource, Boolean>,
                 operatorName,
@@ -153,6 +138,7 @@ class VegasRuleParser<C : VegasQueryDataSource>(
                 defaultElement,
                 source
             )
+
             is StringSetSourceKey<*, *> -> createStringSetRule(
                 sourceKey as SourceKey<C, QuerySource, Set<String>>,
                 operatorName,
@@ -182,71 +168,24 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         )
     }
 
-    private fun createLongRule(
-        key: SourceKey<C, QuerySource, Long>,
-        operatorName: String,
-        valueElement: JsonElement,
-        defaultElement: JsonElement?,
-        source: QuerySource
-    ): Rule<C, QuerySource, Long, Long> {
-        val operator = parseLongOperator(operatorName)
-        val value = valueElement.jsonPrimitive.longOrNull
-            ?: throw IllegalArgumentException("Expected long value for long rule")
-        val default = defaultElement?.jsonPrimitive?.longOrNull
-
-        return Rule(
-            operator = operator,
-            rhs = value,
-            lhs = RuleQuery(source, key, default)
-        )
-    }
-
-    private fun createDoubleRule(
-        key: SourceKey<C, QuerySource, Double>,
-        operatorName: String,
-        valueElement: JsonElement,
-        defaultElement: JsonElement?,
-        source: QuerySource
-    ): Rule<C, QuerySource, Double, Double> {
-        val operator = parseDoubleOperator(operatorName)
-        val value = valueElement.jsonPrimitive.doubleOrNull
-            ?: throw IllegalArgumentException("Expected double value for double rule")
-        val default = defaultElement?.jsonPrimitive?.doubleOrNull
-
-        return Rule(
-            operator = operator,
-            rhs = value,
-            lhs = RuleQuery(source, key, default)
-        )
-    }
-
     private fun createStringRule(
         key: SourceKey<C, QuerySource, String>,
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
         source: QuerySource
-    ): Rule<C, QuerySource, *, *> {
+    ): Rule<C, QuerySource, String, String> {
         val operator = parseStringOperator(operatorName)
+        val value = valueElement.jsonPrimitive.content
         val default = defaultElement?.jsonPrimitive?.content
 
-        return if (operator == StringSetAnyMatch) {
-            val values = valueElement.jsonArray.map { it.jsonPrimitive.content }
-            Rule(
-                operator = StringSetAnyMatch,
-                rhs = values,
-                lhs = RuleQuery(source, key, default)
-            )
-        } else {
-            val value = valueElement.jsonPrimitive.content
-            @Suppress("UNCHECKED_CAST")
-            val typedOperator = operator as StringOperator<String>
-            Rule(
-                operator = typedOperator,
-                rhs = value,
-                lhs = RuleQuery(source, key, default)
-            )
-        }
+        @Suppress("UNCHECKED_CAST")
+        val typedOperator = operator as StringOperator<String>
+        return Rule(
+            operator = typedOperator,
+            rhs = value,
+            lhs = RuleQuery(source, key, default)
+        )
     }
 
     private fun createBooleanRule(
@@ -275,71 +214,50 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         defaultElement: JsonElement?,
         source: QuerySource
     ): Rule<C, QuerySource, Set<String>, List<String>> {
-        // StringSet rules use SetStringAnyMatch operator
+        val operator = parseStringSetOperator(operatorName)
         val values = valueElement.jsonArray.map { it.jsonPrimitive.content }
         val default = defaultElement?.jsonArray?.map { it.jsonPrimitive.content }?.toSet()
 
         return Rule(
-            operator = SetStringAnyMatch,
+            operator = operator,
             rhs = values,
             lhs = RuleQuery(source, key, default)
         )
     }
 
-    private fun parseIntOperator(name: String): IntOperator {
-        val normalized = name.lowercase().removePrefix("int")
-        return when (normalized) {
-            "equals", "eq", "==" -> IntEquals
-            "notequals", "neq", "!=" -> IntNotEquals
-            "greaterthan", "gt", ">" -> IntGreaterThan
-            "greaterthanorequalto", "greaterthanorequals", "gte", ">=" -> IntGreaterThanOrEquals
-            "lessthan", "lt", "<" -> IntLessThan
-            "lessthanorequalto", "lessthanorequals", "lte", "<=" -> IntLessThanOrEquals
-            else -> throw IllegalArgumentException("Unknown int operator: $name")
-        }
+    private fun parseIntOperator(name: String): IntOperator = when (name) {
+        "intEquals" -> IntEquals
+        "intNotEquals" -> IntNotEquals
+        "intLessThan" -> IntLessThan
+        "intLessThanOrEqualTo" -> IntLessThanOrEquals
+        "intGreaterThan" -> IntGreaterThan
+        "intGreaterThanOrEqualTo" -> IntGreaterThanOrEquals
+        else -> throw IllegalArgumentException("Unknown int operator: $name")
     }
 
-    private fun parseLongOperator(name: String): LongOperator {
-        val normalized = name.lowercase().removePrefix("long")
-        return when (normalized) {
-            "equals", "eq", "==" -> LongEquals
-            "notequals", "neq", "!=" -> LongNotEquals
-            "greaterthan", "gt", ">" -> LongGreaterThan
-            "greaterthanorequalto", "greaterthanorequals", "gte", ">=" -> LongGreaterThanOrEquals
-            "lessthan", "lt", "<" -> LongLessThan
-            "lessthanorequalto", "lessthanorequals", "lte", "<=" -> LongLessThanOrEquals
-            else -> throw IllegalArgumentException("Unknown long operator: $name")
-        }
-    }
-
-    private fun parseDoubleOperator(name: String): DoubleOperator {
-        val normalized = name.lowercase().removePrefix("double")
-        return when (normalized) {
-            "equals", "eq", "==" -> DoubleEquals
-            "notequals", "neq", "!=" -> DoubleNotEquals
-            "greaterthan", "gt", ">" -> DoubleGreaterThan
-            "greaterthanorequalto", "greaterthanorequals", "gte", ">=" -> DoubleGreaterThanOrEquals
-            "lessthan", "lt", "<" -> DoubleLessThan
-            "lessthanorequalto", "lessthanorequals", "lte", "<=" -> DoubleLessThanOrEquals
-            else -> throw IllegalArgumentException("Unknown double operator: $name")
-        }
-    }
-
-    private fun parseStringOperator(name: String): StringOperator<*> = when (name.lowercase()) {
-        "equals", "eq", "==" -> StringEquals
-        "notequals", "neq", "!=" -> StringNotEquals
-        "contains" -> StringContains
-        "startswith" -> StringStartsWith
-        "endswith" -> StringEndsWith
-        "equalsignorecase" -> StringEqualsIgnoreCase
-        "stringsetanymatch" -> StringSetAnyMatch
+    private fun parseStringOperator(name: String): StringOperator<*> = when (name) {
+        "stringEquals" -> StringEquals
+        "stringNotEquals" -> StringNotEquals
+        "stringContains" -> StringContains
+        "stringNotContains" -> StringNotContains
         else -> throw IllegalArgumentException("Unknown string operator: $name")
     }
 
-    private fun parseBooleanOperator(name: String): BooleanOperator = when (name.lowercase()) {
-        "equals", "eq", "==", "bool", "boolean" -> BooleanEquals
-        "notequals", "neq", "!=", "not" -> BooleanNotEquals
+    private fun parseBooleanOperator(name: String): BooleanOperator = when (name) {
+        "bool" -> BooleanEquals
         else -> throw IllegalArgumentException("Unknown boolean operator: $name")
+    }
+
+    private fun parseStringSetOperator(name: String): SetStringOperator<List<String>> = when (name) {
+        "stringSetEquivalent" -> StringSetEquivalent
+        "stringSetNotEquivalent" -> StringSetNotEquivalent
+        "stringSetIsSubset" -> StringSetIsSubset
+        "stringSetNotIsSubset" -> StringSetNotIsSubset
+        "stringSetIsSuperset" -> StringSetIsSuperset
+        "stringSetNotIsSuperset" -> StringSetNotIsSuperset
+        "stringSetAnyMatch" -> StringSetAnyMatch
+        "stringSetNotAnyMatch" -> StringSetNotAnyMatch
+        else -> throw IllegalArgumentException("Unknown string set operator: $name")
     }
 
     private fun findRulesArray(root: JsonObject): JsonArray {

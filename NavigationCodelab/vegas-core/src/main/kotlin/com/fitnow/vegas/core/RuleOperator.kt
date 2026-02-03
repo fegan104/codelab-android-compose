@@ -141,6 +141,10 @@ data object StringContains : StringOperator<String> {
     override fun evaluate(lhs: String, rhs: String): Boolean = lhs.contains(rhs)
 }
 
+data object StringNotContains : StringOperator<String> {
+    override fun evaluate(lhs: String, rhs: String): Boolean = !lhs.contains(rhs)
+}
+
 data object StringStartsWith : StringOperator<String> {
     override fun evaluate(lhs: String, rhs: String): Boolean = lhs.startsWith(rhs)
 }
@@ -153,10 +157,6 @@ data object StringEqualsIgnoreCase : StringOperator<String> {
     override fun evaluate(lhs: String, rhs: String): Boolean = lhs.equals(rhs, ignoreCase = true)
 }
 
-data object StringSetAnyMatch : StringOperator<List<String>> {
-    override fun evaluate(lhs: String, rhs: List<String>): Boolean = rhs.any { it == lhs }
-}
-
 // ============================================================================
 // Set<String> Operators
 // ============================================================================
@@ -167,10 +167,59 @@ data object StringSetAnyMatch : StringOperator<List<String>> {
 sealed interface SetStringOperator<R> : RuleOperator<Set<String>, R>
 
 /**
+ * Checks if the sets are equivalent (contain the same elements).
+ */
+data object StringSetEquivalent : SetStringOperator<List<String>> {
+    override fun evaluate(lhs: Set<String>, rhs: List<String>): Boolean = lhs == rhs.toSet()
+}
+
+/**
+ * Checks if the sets are not equivalent.
+ */
+data object StringSetNotEquivalent : SetStringOperator<List<String>> {
+    override fun evaluate(lhs: Set<String>, rhs: List<String>): Boolean = lhs != rhs.toSet()
+}
+
+/**
+ * Checks if the left-hand set is a subset of the right-hand list.
+ */
+data object StringSetIsSubset : SetStringOperator<List<String>> {
+    override fun evaluate(lhs: Set<String>, rhs: List<String>): Boolean = rhs.toSet().containsAll(lhs)
+}
+
+/**
+ * Checks if the left-hand set is not a subset of the right-hand list.
+ */
+data object StringSetNotIsSubset : SetStringOperator<List<String>> {
+    override fun evaluate(lhs: Set<String>, rhs: List<String>): Boolean = !rhs.toSet().containsAll(lhs)
+}
+
+/**
+ * Checks if the left-hand set is a superset of the right-hand list.
+ */
+data object StringSetIsSuperset : SetStringOperator<List<String>> {
+    override fun evaluate(lhs: Set<String>, rhs: List<String>): Boolean = lhs.containsAll(rhs)
+}
+
+/**
+ * Checks if the left-hand set is not a superset of the right-hand list.
+ */
+data object StringSetNotIsSuperset : SetStringOperator<List<String>> {
+    override fun evaluate(lhs: Set<String>, rhs: List<String>): Boolean = !lhs.containsAll(rhs)
+}
+
+/**
  * Checks if any element of the left-hand set matches any element of the right-hand list.
  */
-data object SetStringAnyMatch : SetStringOperator<List<String>> {
+data object StringSetAnyMatch : SetStringOperator<List<String>> {
     override fun evaluate(lhs: Set<String>, rhs: List<String>): Boolean = lhs.any { it in rhs }
+}
+
+/**
+ * Checks if no element of the left-hand set matches any element of the right-hand list.
+ */
+data object StringSetNotAnyMatch : SetStringOperator<List<String>> {
+    override fun evaluate(lhs: Set<String>, rhs: List<String>): Boolean = lhs.none { it in rhs }
 }
 
 // ============================================================================

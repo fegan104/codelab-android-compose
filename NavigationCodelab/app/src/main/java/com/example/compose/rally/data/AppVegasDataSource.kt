@@ -23,10 +23,11 @@ import com.example.compose.rally.generated.PromotionHistoryKeys
 import com.example.compose.rally.generated.PromotionHistorySource
 import com.example.compose.rally.generated.UserKeys
 import com.example.compose.rally.generated.UserSource
+import java.time.LocalDate
 import java.util.Calendar
 
 class AppVegasDataSource(
-    private val nowProvider: () -> Calendar = { Calendar.getInstance() }
+    private val config: Configuration = Configuration()
 ) : GeneratedVegasDataSource {
 
     override fun fetchUserStringSet(source: UserSource, key: UserKeys.UserStringSetSourceKey): Set<String>? {
@@ -37,7 +38,7 @@ class AppVegasDataSource(
 
     override fun fetchUserInt(source: UserSource, key: UserKeys.UserIntSourceKey): Int? {
         return when (key) {
-            UserKeys.UserIntSourceKey.Day -> nowProvider().get(Calendar.DAY_OF_MONTH)
+            UserKeys.UserIntSourceKey.Day -> LocalDate.now().dayOfYear
             UserKeys.UserIntSourceKey.DaysSinceAccountCreated -> 45
         }
     }
@@ -78,8 +79,6 @@ class AppVegasDataSource(
         source: ConfigurationSource,
         key: ConfigurationKeys.ConfigurationBooleanSourceKey
     ): Boolean? {
-        return when (key) {
-            ConfigurationKeys.ConfigurationBooleanSourceKey.AndroidPremiumTimerTest -> false
-        }
+        return config.getBoolean(key.raw)
     }
 }

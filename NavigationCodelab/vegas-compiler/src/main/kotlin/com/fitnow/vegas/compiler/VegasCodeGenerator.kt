@@ -21,7 +21,7 @@ import com.squareup.kotlinpoet.asTypeName
  * - GeneratedVegasSourceKeyRegistry for string-to-key lookups
  */
 class VegasCodeGenerator(
-    private val manifest: VegasManifest,
+    manifest: VegasManifest,
     private val packageName: String = "com.fitnow.vegas.generated"
 ) {
     private val sourcesAndKeys: Map<String, Set<SourceKeyInfo>> = manifest.extractSourcesAndKeys()
@@ -138,7 +138,7 @@ class VegasCodeGenerator(
                         .addModifiers(KModifier.SEALED)
                         .addSuperinterface(sourceKeyInterface)
                         .addProperty(
-                            PropertySpec.builder("keyName", String::class)
+                            PropertySpec.builder("raw", String::class)
                                 .addModifiers(KModifier.ABSTRACT)
                                 .build()
                         )
@@ -160,6 +160,17 @@ class VegasCodeGenerator(
                                 val superclassName = ClassName(packageName, "${pascalSourceName}Keys", sealedClassName)
                                 
                                 if (keyInfo.hasWhereClause) {
+                                    // Companion object with KEY constant for accessing the raw key name
+                                    val companionObject = TypeSpec.companionObjectBuilder()
+                                        .addProperty(
+                                            PropertySpec.builder("KEY", String::class)
+                                                .addKdoc("The raw key name as it appears in the JSON manifest.")
+                                                .addModifiers(KModifier.CONST)
+                                                .initializer("%S", keyInfo.name)
+                                                .build()
+                                        )
+                                        .build()
+
                                     // Generate a data class with where clause parameters
                                     addType(
                                         TypeSpec.classBuilder(keyClassName)
@@ -183,22 +194,25 @@ class VegasCodeGenerator(
                                                     .build()
                                             )
                                             .addProperty(
-                                                PropertySpec.builder("keyName", String::class)
+                                                PropertySpec.builder("raw", String::class)
                                                     .addModifiers(KModifier.OVERRIDE)
-                                                    .initializer("%S", keyInfo.name)
+                                                    .initializer("KEY")
                                                     .build()
                                             )
+                                            .addType(companionObject)
                                             .build()
                                     )
                                 } else {
-                                    // Generate a simple object (no where clause)
+                                    // Generate a simple data object (no where clause)
+                                    // For objects, raw is directly accessible (e.g., Target.raw)
                                     addType(
                                         TypeSpec.objectBuilder(keyClassName)
                                             .addKdoc("Key for ${keyInfo.name} (${type.displayName}).")
                                             .addModifiers(KModifier.DATA)
                                             .superclass(superclassName)
                                             .addProperty(
-                                                PropertySpec.builder("keyName", String::class)
+                                                PropertySpec.builder("raw", String::class)
+                                                    .addKdoc("The raw key name as it appears in the JSON manifest.")
                                                     .addModifiers(KModifier.OVERRIDE)
                                                     .initializer("%S", keyInfo.name)
                                                     .build()
@@ -252,9 +266,9 @@ class VegasCodeGenerator(
                 FunSpec.builder("findKey")
                     .addModifiers(KModifier.OVERRIDE)
                     .addParameter("sourceName", String::class)
-                    .addParameter("keyName", String::class)
+                    .addParameter("raw", String::class)
                     .returns(sourceKeyWildcard.copy(nullable = true))
-                    .addStatement("return keyMap[sourceName to keyName]")
+                    .addStatement("return keyMap[sourceName to raw]")
                     .build()
             )
             .addFunction(
@@ -299,7 +313,7 @@ class VegasCodeGenerator(
             .build()
     }
 
-    private fun buildSourceMapInitializer(): com.squareup.kotlinpoet.CodeBlock {
+    private fun buildSourceMapInitializer(): CodeBlock {
         val mapOf = MemberName("kotlin.collections", "mapOf")
         return com.squareup.kotlinpoet.CodeBlock.builder()
             .add("%M(\n", mapOf)
