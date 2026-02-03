@@ -19,9 +19,10 @@ package com.fitnow.vegas.core
 /**
  * Sealed interface for rule operators that evaluate comparisons.
  *
- * @param T The type of values being compared
+ * @param L The type of the left-hand side value
+ * @param R The type of the right-hand side value
  */
-sealed interface RuleOperator<T> {
+sealed interface RuleOperator<L, R> {
     /**
      * Evaluates the comparison between left-hand side and right-hand side values.
      *
@@ -29,14 +30,14 @@ sealed interface RuleOperator<T> {
      * @param rhs The right-hand side value (from the rule definition)
      * @return true if the comparison holds, false otherwise
      */
-    fun evaluate(lhs: T, rhs: T): Boolean
+    fun evaluate(lhs: L, rhs: R): Boolean
 }
 
 // ============================================================================
 // Int Operators
 // ============================================================================
 
-sealed interface IntOperator : RuleOperator<Int>
+sealed interface IntOperator : RuleOperator<Int, Int>
 
 data object IntEquals : IntOperator {
     override fun evaluate(lhs: Int, rhs: Int): Boolean = lhs == rhs
@@ -66,7 +67,7 @@ data object IntLessThanOrEquals : IntOperator {
 // Long Operators
 // ============================================================================
 
-sealed interface LongOperator : RuleOperator<Long>
+sealed interface LongOperator : RuleOperator<Long, Long>
 
 data object LongEquals : LongOperator {
     override fun evaluate(lhs: Long, rhs: Long): Boolean = lhs == rhs
@@ -96,7 +97,7 @@ data object LongLessThanOrEquals : LongOperator {
 // Double Operators
 // ============================================================================
 
-sealed interface DoubleOperator : RuleOperator<Double>
+sealed interface DoubleOperator : RuleOperator<Double, Double>
 
 data object DoubleEquals : DoubleOperator {
     override fun evaluate(lhs: Double, rhs: Double): Boolean = lhs == rhs
@@ -126,37 +127,57 @@ data object DoubleLessThanOrEquals : DoubleOperator {
 // String Operators
 // ============================================================================
 
-sealed interface StringOperator : RuleOperator<String>
+sealed interface StringOperator<R> : RuleOperator<String, R>
 
-data object StringEquals : StringOperator {
+data object StringEquals : StringOperator<String> {
     override fun evaluate(lhs: String, rhs: String): Boolean = lhs == rhs
 }
 
-data object StringNotEquals : StringOperator {
+data object StringNotEquals : StringOperator<String> {
     override fun evaluate(lhs: String, rhs: String): Boolean = lhs != rhs
 }
 
-data object StringContains : StringOperator {
+data object StringContains : StringOperator<String> {
     override fun evaluate(lhs: String, rhs: String): Boolean = lhs.contains(rhs)
 }
 
-data object StringStartsWith : StringOperator {
+data object StringStartsWith : StringOperator<String> {
     override fun evaluate(lhs: String, rhs: String): Boolean = lhs.startsWith(rhs)
 }
 
-data object StringEndsWith : StringOperator {
+data object StringEndsWith : StringOperator<String> {
     override fun evaluate(lhs: String, rhs: String): Boolean = lhs.endsWith(rhs)
 }
 
-data object StringEqualsIgnoreCase : StringOperator {
+data object StringEqualsIgnoreCase : StringOperator<String> {
     override fun evaluate(lhs: String, rhs: String): Boolean = lhs.equals(rhs, ignoreCase = true)
+}
+
+data object StringSetAnyMatch : StringOperator<List<String>> {
+    override fun evaluate(lhs: String, rhs: List<String>): Boolean = rhs.any { it == lhs }
+}
+
+// ============================================================================
+// Set<String> Operators
+// ============================================================================
+
+/**
+ * Operators that compare a Set<String> against some right-hand side value.
+ */
+sealed interface SetStringOperator<R> : RuleOperator<Set<String>, R>
+
+/**
+ * Checks if any element of the left-hand set matches any element of the right-hand list.
+ */
+data object SetStringAnyMatch : SetStringOperator<List<String>> {
+    override fun evaluate(lhs: Set<String>, rhs: List<String>): Boolean = lhs.any { it in rhs }
 }
 
 // ============================================================================
 // Boolean Operators
 // ============================================================================
 
-sealed interface BooleanOperator : RuleOperator<Boolean>
+sealed interface BooleanOperator : RuleOperator<Boolean, Boolean>
 
 data object BooleanEquals : BooleanOperator {
     override fun evaluate(lhs: Boolean, rhs: Boolean): Boolean = lhs == rhs

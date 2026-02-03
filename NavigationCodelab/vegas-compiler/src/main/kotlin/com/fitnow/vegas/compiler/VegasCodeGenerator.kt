@@ -12,6 +12,8 @@ class VegasCodeGenerator(
     private val manifest: VegasManifest,
     private val packageName: String = "com.fitnow.vegas.generated"
 ) {
+    // Extract sources and keys from the manifest rules
+    private val sourcesAndKeys: Map<String, Set<SourceKeyInfo>> = manifest.extractSourcesAndKeys()
 
     /**
      * Generates the complete VegasGeneratedApi.kt content.
@@ -37,11 +39,12 @@ class VegasCodeGenerator(
      * Generates QuerySource object implementations for each source.
      */
     private fun StringBuilder.generateQuerySources() {
-        manifest.sources.forEach { source ->
+        sourcesAndKeys.keys.forEach { sourceName ->
+            val pascalName = sourceName.toPascalCase()
             appendLine("/**")
-            appendLine(" * QuerySource for ${source.name} data.")
+            appendLine(" * QuerySource for $sourceName data.")
             appendLine(" */")
-            appendLine("object ${source.name}Source : QuerySource")
+            appendLine("object ${pascalName}Source : QuerySource")
         }
     }
 
@@ -55,14 +58,15 @@ class VegasCodeGenerator(
         appendLine(" */")
         appendLine("interface GeneratedVegasDataSource : VegasQueryDataSource {")
 
-        manifest.sources.forEach { source ->
-            source.keys.groupBy { it.type }.forEach { (type, keys) ->
-                val sourceKeyType = "${source.name}Keys.${source.name}${type.displayName}SourceKey"
+        sourcesAndKeys.forEach { (sourceName, keys) ->
+            val pascalSourceName = sourceName.toPascalCase()
+            keys.groupBy { it.type }.forEach { (type, _) ->
+                val sourceKeyType = "${pascalSourceName}Keys.${pascalSourceName}${type.displayName}SourceKey"
                 appendLine()
                 appendLine("    /**")
-                appendLine("     * Fetches a ${type.displayName} value for the given key from ${source.name}.")
+                appendLine("     * Fetches a ${type.displayName} value for the given key from $sourceName.")
                 appendLine("     */")
-                appendLine("    fun fetch${source.name}${type.displayName}(source: ${source.name}Source, key: $sourceKeyType): ${type.kotlinType}?")
+                appendLine("    fun fetch${pascalSourceName}${type.displayName}(source: ${pascalSourceName}Source, key: $sourceKeyType): ${type.kotlinType}?")
             }
         }
 
@@ -73,37 +77,38 @@ class VegasCodeGenerator(
      * Generates key container objects with sealed parent classes and concrete key objects.
      */
     private fun StringBuilder.generateKeyContainers() {
-        manifest.sources.forEach { source ->
+        sourcesAndKeys.forEach { (sourceName, keys) ->
+            val pascalSourceName = sourceName.toPascalCase()
             appendLine("/**")
-            appendLine(" * Container object for ${source.name} source keys.")
+            appendLine(" * Container object for $sourceName source keys.")
             appendLine(" */")
-            appendLine("object ${source.name}Keys {")
+            appendLine("object ${pascalSourceName}Keys {")
 
             // Group keys by type
-            val keysByType = source.keys.groupBy { it.type }
+            val keysByType = keys.groupBy { it.type }
 
             // Generate sealed parent class for each type
-            keysByType.forEach { (type, keys) ->
+            keysByType.forEach { (type, typeKeys) ->
                 appendLine()
                 appendLine("    /**")
-                appendLine("     * Sealed parent for ${source.name} ${type.displayName} keys.")
+                appendLine("     * Sealed parent for $sourceName ${type.displayName} keys.")
                 appendLine("     */")
-                appendLine("    sealed class ${source.name}${type.displayName}SourceKey : ${type.sourceKeyInterface}<GeneratedVegasDataSource, ${source.name}Source> {")
+                appendLine("    sealed class ${pascalSourceName}${type.displayName}SourceKey : ${type.sourceKeyInterface}<GeneratedVegasDataSource, ${pascalSourceName}Source> {")
                 appendLine("        abstract val keyName: String")
                 appendLine()
-                appendLine("        override fun resolve(dataSource: GeneratedVegasDataSource, source: ${source.name}Source): ${type.kotlinType}? {")
-                appendLine("            return dataSource.fetch${source.name}${type.displayName}(source, this)")
+                appendLine("        override fun resolve(dataSource: GeneratedVegasDataSource, source: ${pascalSourceName}Source): ${type.kotlinType}? {")
+                appendLine("            return dataSource.fetch${pascalSourceName}${type.displayName}(source, this)")
                 appendLine("        }")
                 appendLine("    }")
 
                 // Generate concrete key objects
-                keys.forEach { key ->
+                typeKeys.forEach { keyInfo ->
                     appendLine()
                     appendLine("    /**")
-                    appendLine("     * Key for ${key.name} (${type.displayName}).")
+                    appendLine("     * Key for ${keyInfo.name} (${type.displayName}).")
                     appendLine("     */")
-                    appendLine("    data object ${key.name.toPascalCase()} : ${source.name}${type.displayName}SourceKey() {")
-                    appendLine("        override val keyName: String = \"${key.name}\"")
+                    appendLine("    data object ${keyInfo.name.toPascalCase()} : ${pascalSourceName}${type.displayName}SourceKey() {")
+                    appendLine("        override val keyName: String = \"${keyInfo.name}\"")
                     appendLine("    }")
                 }
             }
@@ -124,17 +129,29 @@ class VegasCodeGenerator(
         appendLine("    private val keyMap: Map<Pair<String, String>, SourceKey<GeneratedVegasDataSource, *, *>> = mapOf(")
 
         val entries = mutableListOf<String>()
-        manifest.sources.forEach { source ->
-            source.keys.forEach { key ->
-                entries.add("        (\"${source.name}\" to \"${key.name}\") to ${source.name}Keys.${key.name.toPascalCase()}")
+        sourcesAndKeys.forEach { (sourceName, keys) ->
+            val pascalSourceName = sourceName.toPascalCase()
+            keys.forEach { keyInfo ->
+                entries.add("        (\"$sourceName\" to \"${keyInfo.name}\") to ${pascalSourceName}Keys.${keyInfo.name.toPascalCase()}")
             }
         }
         appendLine(entries.joinToString(",\n"))
 
         appendLine("    )")
         appendLine()
+        appendLine("    private val sourceMap: Map<String, QuerySource> = mapOf(")
+        val sources = sourcesAndKeys.keys.map { sourceName ->
+            "        \"$sourceName\" to ${sourceName.toPascalCase()}Source"
+        }
+        appendLine(sources.joinToString(",\n"))
+        appendLine("    )")
+        appendLine()
         appendLine("    override fun findKey(sourceName: String, keyName: String): SourceKey<GeneratedVegasDataSource, *, *>? {")
         appendLine("        return keyMap[sourceName to keyName]")
+        appendLine("    }")
+        appendLine()
+        appendLine("    override fun findSource(sourceName: String): QuerySource? {")
+        appendLine("        return sourceMap[sourceName]")
         appendLine("    }")
         appendLine("}")
     }
@@ -171,6 +188,7 @@ private val KeyType.kotlinType: String
         KeyType.BOOLEAN -> "Boolean"
         KeyType.LONG -> "Long"
         KeyType.DOUBLE -> "Double"
+        KeyType.STRING_SET -> "Set<String>"
     }
 
 /**
@@ -183,6 +201,7 @@ private val KeyType.displayName: String
         KeyType.BOOLEAN -> "Boolean"
         KeyType.LONG -> "Long"
         KeyType.DOUBLE -> "Double"
+        KeyType.STRING_SET -> "StringSet"
     }
 
 /**
@@ -195,6 +214,7 @@ private val KeyType.sourceKeyInterface: String
         KeyType.BOOLEAN -> "BooleanSourceKey"
         KeyType.LONG -> "LongSourceKey"
         KeyType.DOUBLE -> "DoubleSourceKey"
+        KeyType.STRING_SET -> "StringSetSourceKey"
     }
 
 /**

@@ -14,7 +14,17 @@
  * limitations under the License.
  */
 
+pluginManagement {
+    // Include vegas-compiler as a plugin build so its Gradle plugin is discoverable
+    includeBuild('vegas-compiler')
+}
+
+// Include vegas-core as a composite build so both app and vegas-compiler can use it
+includeBuild('vegas-core') {
+    dependencySubstitution {
+        substitute module('com.fitnow.vegas:vegas-core') using project(':')
+    }
+}
+
 include ':app'
-include ':vegas-core'
-include ':vegas-compiler'
 rootProject.name = "Rally"

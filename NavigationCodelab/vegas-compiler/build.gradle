@@ -1,21 +1,27 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    id 'org.jetbrains.kotlin.jvm'
-    id 'org.jetbrains.kotlin.plugin.serialization' version '2.3.0'
+    id 'org.jetbrains.kotlin.jvm' version '2.1.0'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.1.0'
     id 'java-gradle-plugin'
 }
+
+group = 'com.fitnow.vegas'
+version = '1.0.0'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
 
-tasks.withType(KotlinCompile).configureEach {
-    kotlin {
-        compilerOptions {
-            jvmTarget = "17"
-        }
+repositories {
+    google()
+    mavenCentral()
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
     }
 }
 
@@ -28,9 +34,14 @@ gradlePlugin {
     }
 }
 
+// Handle duplicate resources from gradle-plugin generation
+tasks.named('processResources', ProcessResources) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 dependencies {
     implementation gradleApi()
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.3.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.1.0"
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3"
-    implementation project(':vegas-core')
+    implementation "com.fitnow.vegas:vegas-core"
 }

@@ -1,5 +1,7 @@
 package com.fitnow.vegas.compiler
 
+import java.io.File
+import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.SourceSetContainer
@@ -56,10 +58,13 @@ class VegasPlugin : Plugin<Project> {
         project.afterEvaluate {
             // For Kotlin JVM projects
             project.extensions.findByType(SourceSetContainer::class.java)?.let { sourceSets ->
-                sourceSets.named("main") { sourceSet ->
+                sourceSets.findByName("main")?.let { sourceSet ->
                     sourceSet.java.srcDir(outputDir)
                 }
             }
+
+            // For Android projects (configured via reflection to avoid AGP dependency)
+            addAndroidSourceSet(project, outputDir.get().asFile)
 
             // Make compileKotlin depend on generation
             project.tasks.findByName("compileKotlin")?.dependsOn(generateTask)
@@ -67,5 +72,21 @@ class VegasPlugin : Plugin<Project> {
             // For Android projects
             project.tasks.findByName("preBuild")?.dependsOn(generateTask)
         }
+    }
+
+    private fun addAndroidSourceSet(project: Project, outputDir: File) {
+        val androidExtension = project.extensions.findByName("android") ?: return
+        val sourceSets = androidExtension.javaClass.methods
+            .firstOrNull { it.name == "getSourceSets" }
+            ?.invoke(androidExtension) as? NamedDomainObjectContainer<*>
+            ?: return
+        val mainSourceSet = sourceSets.findByName("main") ?: return
+        val javaDirSet = mainSourceSet.javaClass.methods
+            .firstOrNull { it.name == "getJava" }
+            ?.invoke(mainSourceSet)
+            ?: return
+        javaDirSet.javaClass.methods
+            .firstOrNull { it.name == "srcDir" }
+            ?.invoke(javaDirSet, outputDir)
     }
 }

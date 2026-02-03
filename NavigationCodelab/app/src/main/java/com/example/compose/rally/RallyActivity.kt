@@ -28,8 +28,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.example.compose.rally.data.AppVegasDataSource
 import com.example.compose.rally.ui.components.RallyTabRow
 import com.example.compose.rally.ui.theme.RallyTheme
+import com.example.compose.rally.generated.GeneratedVegasDataSource
+import com.example.compose.rally.generated.GeneratedVegasSourceKeyRegistry
+import com.fitnow.vegas.core.VegasRuleParser
 
 /**
  * This Activity recreates part of the Rally Material Study from
@@ -38,6 +42,8 @@ import com.example.compose.rally.ui.theme.RallyTheme
 class RallyActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val appDataSource = AppVegasDataSource()
+        val vegasEnabled = evaluateVegasRules(appDataSource)
         setContent {
             RallyApp()
         }
@@ -62,4 +68,13 @@ fun RallyApp() {
             }
         }
     }
+}
+
+private fun ComponentActivity.evaluateVegasRules(appDataSource: GeneratedVegasDataSource): Boolean {
+    val rulesJson = resources.assets.open("dashboard-promo.json")
+        .bufferedReader()
+        .use { it.readText() }
+    val parser = VegasRuleParser(GeneratedVegasSourceKeyRegistry)
+    val rules = parser.parse(rulesJson)
+    return rules.all { it.evaluate(appDataSource) }
 }

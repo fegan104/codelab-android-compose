@@ -18,6 +18,7 @@ plugins {
     id 'com.android.application'
     id 'kotlin-android'
     id 'org.jetbrains.kotlin.plugin.compose'
+    id 'com.fitnow.vegas'
 }
 
 android {
@@ -88,6 +89,7 @@ dependencies {
     implementation "androidx.appcompat:appcompat:1.7.1"
     implementation "androidx.core:core-ktx:1.17.0"
     implementation "com.google.android.material:material:1.13.0"
+    implementation "com.fitnow.vegas:vegas-core"
 
     // Compose
     implementation "androidx.compose.runtime:runtime"
@@ -118,4 +120,9 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
         // Set JVM target to 1.8
         jvmTarget = "1.8"
     }
+}
+
+vegas {
+    manifestFile = file("src/main/assets/dashboard-promo.json")
+    packageName = "com.example.compose.rally.generated"
 }

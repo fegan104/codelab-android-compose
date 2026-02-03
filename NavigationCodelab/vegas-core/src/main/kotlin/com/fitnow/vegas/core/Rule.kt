@@ -21,15 +21,15 @@ package com.fitnow.vegas.core
  *
  * @param C The specific VegasQueryDataSource implementation
  * @param S The specific QuerySource type
- * @param T The type of value being queried
+ * @param L The type of value being queried
  * @property source The query source to resolve from
  * @property key The source key used to resolve the value
  * @property defaultValue The default value if resolution returns null
  */
-data class RuleQuery<C : VegasQueryDataSource, S : QuerySource, T>(
+data class RuleQuery<C : VegasQueryDataSource, S : QuerySource, L>(
     val source: S,
-    val key: SourceKey<C, S, T>,
-    val defaultValue: T?
+    val key: SourceKey<C, S, L>,
+    val defaultValue: L?
 )
 
 /**
@@ -38,15 +38,16 @@ data class RuleQuery<C : VegasQueryDataSource, S : QuerySource, T>(
  *
  * @param C The specific VegasQueryDataSource implementation
  * @param S The specific QuerySource type
- * @param T The type of value being compared
+ * @param L The type of the left-hand side value
+ * @param R The type of the right-hand side value
  * @property operator The operator used to compare values
  * @property rhs The right-hand side value (constant from rule definition)
  * @property lhs The left-hand side query (resolved from data source)
  */
-data class Rule<C : VegasQueryDataSource, S : QuerySource, T>(
-    val operator: RuleOperator<T>,
-    val rhs: T,
-    val lhs: RuleQuery<C, S, T>
+data class Rule<C : VegasQueryDataSource, S : QuerySource, L, R>(
+    val operator: RuleOperator<L, R>,
+    val rhs: R,
+    val lhs: RuleQuery<C, S, L>
 ) {
     /**
      * Evaluates this rule against the provided data source.

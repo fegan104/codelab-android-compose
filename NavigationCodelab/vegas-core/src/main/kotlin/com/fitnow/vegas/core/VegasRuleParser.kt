@@ -20,7 +20,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
@@ -44,29 +43,34 @@ class VegasRuleParser<C : VegasQueryDataSource>(
     /**
      * Parses a JSON string into a list of Rules.
      *
-     * Expected JSON format:
+     * Expected JSON formats:
      * ```json
      * {
-     *   "rules": [
+     *   "commonRulesV2": [
      *     {
-     *       "source": "sourceName",
-     *       "key": "keyName",
-     *       "operator": "equals",
-     *       "value": 42,
-     *       "default": 0
+     *       "operator": "intGreaterThanOrEqualTo",
+     *       "lhs": {
+     *         "source": "user",
+     *         "key": "day",
+     *         "default": 0
+     *       },
+     *       "rhs": 8705
      *     }
      *   ]
      * }
      * ```
      *
-     * Or as a simple array:
+     * Or a direct rules array:
      * ```json
      * [
      *   {
-     *     "source": "sourceName",
-     *     "key": "keyName",
      *     "operator": "equals",
-     *     "value": 42
+     *     "lhs": {
+     *       "source": "user",
+     *       "key": "day",
+     *       "default": 0
+     *     },
+     *     "rhs": 42
      *   }
      * ]
      * ```
@@ -75,13 +79,12 @@ class VegasRuleParser<C : VegasQueryDataSource>(
      * @return List of parsed Rules
      * @throws IllegalArgumentException if the JSON format is invalid
      */
-    fun parse(jsonString: String): List<Rule<C, *, *>> {
+    fun parse(jsonString: String): List<Rule<C, *, *, *>> {
         val element = json.parseToJsonElement(jsonString)
         val rulesArray = when (element) {
             is JsonArray -> element
-            is JsonObject -> element["rules"]?.jsonArray
-                ?: throw IllegalArgumentException("Expected 'rules' array in JSON object")
-            else -> throw IllegalArgumentException("Expected JSON array or object with 'rules' array")
+            is JsonObject -> findRulesArray(element)
+            else -> throw IllegalArgumentException("Expected JSON array or object with rules array")
         }
 
         return rulesArray.mapNotNull { ruleElement ->
@@ -90,20 +93,28 @@ class VegasRuleParser<C : VegasQueryDataSource>(
     }
 
     @Suppress("UNCHECKED_CAST", "RedundantElseInWhen")
-    private fun parseRule(ruleJson: JsonObject): Rule<C, *, *>? {
-        val sourceName = ruleJson["source"]?.jsonPrimitive?.content
+    private fun parseRule(ruleJson: JsonObject): Rule<C, *, *, *>? {
+        val lhsObject = ruleJson["lhs"]?.jsonObject
+        val sourceNameRaw = lhsObject?.get("source")?.jsonPrimitive?.content
+            ?: ruleJson["source"]?.jsonPrimitive?.content
             ?: throw IllegalArgumentException("Rule missing 'source' field")
-        val keyName = ruleJson["key"]?.jsonPrimitive?.content
+        val keyNameRaw = lhsObject?.get("key")?.jsonPrimitive?.content
+            ?: ruleJson["key"]?.jsonPrimitive?.content
             ?: throw IllegalArgumentException("Rule missing 'key' field")
         val operatorName = ruleJson["operator"]?.jsonPrimitive?.content
             ?: throw IllegalArgumentException("Rule missing 'operator' field")
-        val valueElement = ruleJson["value"]
-            ?: throw IllegalArgumentException("Rule missing 'value' field")
-        val defaultElement = ruleJson["default"]
+        val valueElement = ruleJson["rhs"]
+            ?: ruleJson["value"]
+            ?: throw IllegalArgumentException("Rule missing 'rhs' field")
+        val defaultElement = lhsObject?.get("default") ?: ruleJson["default"]
+        val sourceName = normalizeSourceName(sourceNameRaw)
+        val keyName = normalizeKeyName(keyNameRaw)
 
         // Look up the key from the registry
         val sourceKey = registry.findKey(sourceName, keyName)
             ?: return null // Key not found, skip this rule
+
+        val source = resolveSource(sourceName)
 
         // Determine the type and create the appropriate rule
         return when (sourceKey) {
@@ -112,37 +123,43 @@ class VegasRuleParser<C : VegasQueryDataSource>(
                 operatorName,
                 valueElement,
                 defaultElement,
-                sourceName
+                source
             )
             is LongSourceKey<*, *> -> createLongRule(
                 sourceKey as SourceKey<C, QuerySource, Long>,
                 operatorName,
                 valueElement,
                 defaultElement,
-                sourceName
+                source
             )
             is DoubleSourceKey<*, *> -> createDoubleRule(
                 sourceKey as SourceKey<C, QuerySource, Double>,
                 operatorName,
                 valueElement,
                 defaultElement,
-                sourceName
+                source
             )
             is StringSourceKey<*, *> -> createStringRule(
                 sourceKey as SourceKey<C, QuerySource, String>,
                 operatorName,
                 valueElement,
                 defaultElement,
-                sourceName
+                source
             )
             is BooleanSourceKey<*, *> -> createBooleanRule(
                 sourceKey as SourceKey<C, QuerySource, Boolean>,
                 operatorName,
                 valueElement,
                 defaultElement,
-                sourceName
+                source
             )
-            else -> null // Unknown key type
+            is StringSetSourceKey<*, *> -> createStringSetRule(
+                sourceKey as SourceKey<C, QuerySource, Set<String>>,
+                operatorName,
+                valueElement,
+                defaultElement,
+                source
+            )
         }
     }
 
@@ -151,13 +168,12 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
-        sourceName: String
-    ): Rule<C, QuerySource, Int> {
+        source: QuerySource
+    ): Rule<C, QuerySource, Int, Int> {
         val operator = parseIntOperator(operatorName)
         val value = valueElement.jsonPrimitive.intOrNull
             ?: throw IllegalArgumentException("Expected integer value for int rule")
         val default = defaultElement?.jsonPrimitive?.intOrNull
-        val source = createPlaceholderSource(sourceName)
 
         return Rule(
             operator = operator,
@@ -171,13 +187,12 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
-        sourceName: String
-    ): Rule<C, QuerySource, Long> {
+        source: QuerySource
+    ): Rule<C, QuerySource, Long, Long> {
         val operator = parseLongOperator(operatorName)
         val value = valueElement.jsonPrimitive.longOrNull
             ?: throw IllegalArgumentException("Expected long value for long rule")
         val default = defaultElement?.jsonPrimitive?.longOrNull
-        val source = createPlaceholderSource(sourceName)
 
         return Rule(
             operator = operator,
@@ -191,13 +206,12 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
-        sourceName: String
-    ): Rule<C, QuerySource, Double> {
+        source: QuerySource
+    ): Rule<C, QuerySource, Double, Double> {
         val operator = parseDoubleOperator(operatorName)
         val value = valueElement.jsonPrimitive.doubleOrNull
             ?: throw IllegalArgumentException("Expected double value for double rule")
         val default = defaultElement?.jsonPrimitive?.doubleOrNull
-        val source = createPlaceholderSource(sourceName)
 
         return Rule(
             operator = operator,
@@ -211,18 +225,28 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
-        sourceName: String
-    ): Rule<C, QuerySource, String> {
+        source: QuerySource
+    ): Rule<C, QuerySource, *, *> {
         val operator = parseStringOperator(operatorName)
-        val value = valueElement.jsonPrimitive.content
         val default = defaultElement?.jsonPrimitive?.content
-        val source = createPlaceholderSource(sourceName)
 
-        return Rule(
-            operator = operator,
-            rhs = value,
-            lhs = RuleQuery(source, key, default)
-        )
+        return if (operator == StringSetAnyMatch) {
+            val values = valueElement.jsonArray.map { it.jsonPrimitive.content }
+            Rule(
+                operator = StringSetAnyMatch,
+                rhs = values,
+                lhs = RuleQuery(source, key, default)
+            )
+        } else {
+            val value = valueElement.jsonPrimitive.content
+            @Suppress("UNCHECKED_CAST")
+            val typedOperator = operator as StringOperator<String>
+            Rule(
+                operator = typedOperator,
+                rhs = value,
+                lhs = RuleQuery(source, key, default)
+            )
+        }
     }
 
     private fun createBooleanRule(
@@ -230,13 +254,12 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
-        sourceName: String
-    ): Rule<C, QuerySource, Boolean> {
+        source: QuerySource
+    ): Rule<C, QuerySource, Boolean, Boolean> {
         val operator = parseBooleanOperator(operatorName)
         val value = valueElement.jsonPrimitive.booleanOrNull
             ?: throw IllegalArgumentException("Expected boolean value for boolean rule")
         val default = defaultElement?.jsonPrimitive?.booleanOrNull
-        val source = createPlaceholderSource(sourceName)
 
         return Rule(
             operator = operator,
@@ -245,59 +268,106 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         )
     }
 
-    private fun parseIntOperator(name: String): IntOperator = when (name.lowercase()) {
-        "equals", "eq", "==" -> IntEquals
-        "notequals", "neq", "!=" -> IntNotEquals
-        "greaterthan", "gt", ">" -> IntGreaterThan
-        "greaterthanorequals", "gte", ">=" -> IntGreaterThanOrEquals
-        "lessthan", "lt", "<" -> IntLessThan
-        "lessthanorequals", "lte", "<=" -> IntLessThanOrEquals
-        else -> throw IllegalArgumentException("Unknown int operator: $name")
+    private fun createStringSetRule(
+        key: SourceKey<C, QuerySource, Set<String>>,
+        operatorName: String,
+        valueElement: JsonElement,
+        defaultElement: JsonElement?,
+        source: QuerySource
+    ): Rule<C, QuerySource, Set<String>, List<String>> {
+        // StringSet rules use SetStringAnyMatch operator
+        val values = valueElement.jsonArray.map { it.jsonPrimitive.content }
+        val default = defaultElement?.jsonArray?.map { it.jsonPrimitive.content }?.toSet()
+
+        return Rule(
+            operator = SetStringAnyMatch,
+            rhs = values,
+            lhs = RuleQuery(source, key, default)
+        )
     }
 
-    private fun parseLongOperator(name: String): LongOperator = when (name.lowercase()) {
-        "equals", "eq", "==" -> LongEquals
-        "notequals", "neq", "!=" -> LongNotEquals
-        "greaterthan", "gt", ">" -> LongGreaterThan
-        "greaterthanorequals", "gte", ">=" -> LongGreaterThanOrEquals
-        "lessthan", "lt", "<" -> LongLessThan
-        "lessthanorequals", "lte", "<=" -> LongLessThanOrEquals
-        else -> throw IllegalArgumentException("Unknown long operator: $name")
+    private fun parseIntOperator(name: String): IntOperator {
+        val normalized = name.lowercase().removePrefix("int")
+        return when (normalized) {
+            "equals", "eq", "==" -> IntEquals
+            "notequals", "neq", "!=" -> IntNotEquals
+            "greaterthan", "gt", ">" -> IntGreaterThan
+            "greaterthanorequalto", "greaterthanorequals", "gte", ">=" -> IntGreaterThanOrEquals
+            "lessthan", "lt", "<" -> IntLessThan
+            "lessthanorequalto", "lessthanorequals", "lte", "<=" -> IntLessThanOrEquals
+            else -> throw IllegalArgumentException("Unknown int operator: $name")
+        }
     }
 
-    private fun parseDoubleOperator(name: String): DoubleOperator = when (name.lowercase()) {
-        "equals", "eq", "==" -> DoubleEquals
-        "notequals", "neq", "!=" -> DoubleNotEquals
-        "greaterthan", "gt", ">" -> DoubleGreaterThan
-        "greaterthanorequals", "gte", ">=" -> DoubleGreaterThanOrEquals
-        "lessthan", "lt", "<" -> DoubleLessThan
-        "lessthanorequals", "lte", "<=" -> DoubleLessThanOrEquals
-        else -> throw IllegalArgumentException("Unknown double operator: $name")
+    private fun parseLongOperator(name: String): LongOperator {
+        val normalized = name.lowercase().removePrefix("long")
+        return when (normalized) {
+            "equals", "eq", "==" -> LongEquals
+            "notequals", "neq", "!=" -> LongNotEquals
+            "greaterthan", "gt", ">" -> LongGreaterThan
+            "greaterthanorequalto", "greaterthanorequals", "gte", ">=" -> LongGreaterThanOrEquals
+            "lessthan", "lt", "<" -> LongLessThan
+            "lessthanorequalto", "lessthanorequals", "lte", "<=" -> LongLessThanOrEquals
+            else -> throw IllegalArgumentException("Unknown long operator: $name")
+        }
     }
 
-    private fun parseStringOperator(name: String): StringOperator = when (name.lowercase()) {
+    private fun parseDoubleOperator(name: String): DoubleOperator {
+        val normalized = name.lowercase().removePrefix("double")
+        return when (normalized) {
+            "equals", "eq", "==" -> DoubleEquals
+            "notequals", "neq", "!=" -> DoubleNotEquals
+            "greaterthan", "gt", ">" -> DoubleGreaterThan
+            "greaterthanorequalto", "greaterthanorequals", "gte", ">=" -> DoubleGreaterThanOrEquals
+            "lessthan", "lt", "<" -> DoubleLessThan
+            "lessthanorequalto", "lessthanorequals", "lte", "<=" -> DoubleLessThanOrEquals
+            else -> throw IllegalArgumentException("Unknown double operator: $name")
+        }
+    }
+
+    private fun parseStringOperator(name: String): StringOperator<*> = when (name.lowercase()) {
         "equals", "eq", "==" -> StringEquals
         "notequals", "neq", "!=" -> StringNotEquals
         "contains" -> StringContains
         "startswith" -> StringStartsWith
         "endswith" -> StringEndsWith
         "equalsignorecase" -> StringEqualsIgnoreCase
+        "stringsetanymatch" -> StringSetAnyMatch
         else -> throw IllegalArgumentException("Unknown string operator: $name")
     }
 
     private fun parseBooleanOperator(name: String): BooleanOperator = when (name.lowercase()) {
-        "equals", "eq", "==" -> BooleanEquals
-        "notequals", "neq", "!=" -> BooleanNotEquals
+        "equals", "eq", "==", "bool", "boolean" -> BooleanEquals
+        "notequals", "neq", "!=", "not" -> BooleanNotEquals
         else -> throw IllegalArgumentException("Unknown boolean operator: $name")
     }
 
-    /**
-     * Creates a placeholder QuerySource for the given source name.
-     * The actual source resolution happens through the SourceKey.
-     */
-    private fun createPlaceholderSource(sourceName: String): QuerySource {
-        return object : QuerySource {
-            override fun toString(): String = "QuerySource($sourceName)"
+    private fun findRulesArray(root: JsonObject): JsonArray {
+        val rules = root["commonRulesV2"] ?: root["rulesV2"] ?: root["rules"]
+        return rules?.jsonArray
+            ?: throw IllegalArgumentException("Expected rules array in JSON object")
+    }
+
+    private fun normalizeSourceName(sourceName: String): String {
+        return when (sourceName) {
+            "user" -> "User"
+            "history" -> "History"
+            "promotionHistory" -> "History"
+            else -> sourceName.replaceFirstChar { char ->
+                if (char.isLowerCase()) char.titlecase() else char.toString()
+            }
         }
+    }
+
+    private fun normalizeKeyName(keyName: String): String {
+        if (keyName.contains("_")) {
+            return keyName
+        }
+        return keyName.replace(Regex("([a-z0-9])([A-Z])"), "$1_$2").lowercase()
+    }
+
+    private fun resolveSource(sourceName: String): QuerySource {
+        return registry.findSource(sourceName)
+            ?: throw IllegalArgumentException("Unknown source: $sourceName")
     }
 }

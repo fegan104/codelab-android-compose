@@ -59,3 +59,8 @@ interface LongSourceKey<C : VegasQueryDataSource, S : QuerySource> : SourceKey<C
  * Marker interface for SourceKeys that resolve to Double values.
  */
 interface DoubleSourceKey<C : VegasQueryDataSource, S : QuerySource> : SourceKey<C, S, Double>
+
+/**
+ * Marker interface for SourceKeys that resolve to Set<String> values.
+ */
+interface StringSetSourceKey<C : VegasQueryDataSource, S : QuerySource> : SourceKey<C, S, Set<String>>

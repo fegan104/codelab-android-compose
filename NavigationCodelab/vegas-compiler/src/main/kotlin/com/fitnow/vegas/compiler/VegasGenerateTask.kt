@@ -64,7 +64,9 @@ abstract class VegasGenerateTask : DefaultTask() {
         outputFile.parentFile.mkdirs()
         outputFile.writeText(generatedCode)
 
-        logger.lifecycle("Vegas: Generated ${manifest.sources.size} sources with ${manifest.sources.sumOf { it.keys.size }} keys")
+        val sourcesAndKeys = manifest.extractSourcesAndKeys()
+        val totalKeys = sourcesAndKeys.values.sumOf { it.size }
+        logger.lifecycle("Vegas: Generated ${sourcesAndKeys.size} sources with $totalKeys keys")
         logger.lifecycle("Vegas: Output written to ${outputFile.absolutePath}")
     }
 }

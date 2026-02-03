@@ -31,4 +31,12 @@ interface VegasSourceKeyRegistry<C : VegasQueryDataSource> {
      * @return The matching SourceKey, or null if not found
      */
     fun findKey(sourceName: String, keyName: String): SourceKey<C, *, *>?
+
+    /**
+     * Finds the QuerySource instance for the given source name.
+     *
+     * @param sourceName The name of the QuerySource
+     * @return The matching QuerySource, or null if not found
+     */
+    fun findSource(sourceName: String): QuerySource? = null
 }
