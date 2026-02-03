@@ -39,55 +39,6 @@ class VegasRuleParser<C : VegasQueryDataSource>(
     internal val json = Json { ignoreUnknownKeys = true }
 
     /**
-     * Parses a JSON string into a list of Rules.
-     *
-     * Expected JSON formats:
-     * ```json
-     * {
-     *   "commonRulesV2": [
-     *     {
-     *       "operator": "intGreaterThanOrEqualTo",
-     *       "lhs": {
-     *         "source": "user",
-     *         "key": "day",
-     *         "default": 0
-     *       },
-     *       "rhs": 8705
-     *     }
-     *   ]
-     * }
-     * ```
-     *
-     * Or a direct rules array:
-     * ```json
-     * [
-     *   {
-     *     "operator": "equals",
-     *     "lhs": {
-     *       "source": "user",
-     *       "key": "day",
-     *       "default": 0
-     *     },
-     *     "rhs": 42
-     *   }
-     * ]
-     * ```
-     *
-     * @param jsonString The JSON string to parse
-     * @return List of parsed Rules
-     * @throws IllegalArgumentException if the JSON format is invalid
-     */
-    fun parse(jsonString: String): List<Rule<C, *, *, *>> {
-        val rulesArray = when (val element = json.parseToJsonElement(jsonString)) {
-            is JsonArray -> element
-            is JsonObject -> findRulesArray(element)
-            else -> throw IllegalArgumentException("Expected JSON array or object with rules array")
-        }
-
-        return parseRulesArray(rulesArray)
-    }
-
-    /**
      * Parses a JsonArray of rules into a list of Rule objects.
      * Exposed for use by VegasPromotionGroupParser.
      *
@@ -231,9 +182,9 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         valueElement: JsonElement,
         defaultElement: JsonElement?,
         source: QuerySource
-    ): Rule<C, QuerySource, Set<String>, List<String>> {
+    ): Rule<C, QuerySource, Set<String>, Set<String>> {
         val operator = parseStringSetOperator(operatorName)
-        val values = valueElement.jsonArray.map { it.jsonPrimitive.content }
+        val values = valueElement.jsonArray.map { it.jsonPrimitive.content }.toSet()
         val default = defaultElement?.jsonArray?.map { it.jsonPrimitive.content }?.toSet()
 
         return Rule(
@@ -266,7 +217,7 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         else -> throw IllegalArgumentException("Unknown boolean operator: $name")
     }
 
-    private fun parseStringSetOperator(name: String): SetStringOperator<List<String>> = when (name) {
+    private fun parseStringSetOperator(name: String): SetStringOperator<Set<String>> = when (name) {
         "stringSetEquivalent" -> StringSetEquivalent
         "stringSetNotEquivalent" -> StringSetNotEquivalent
         "stringSetIsSubset" -> StringSetIsSubset

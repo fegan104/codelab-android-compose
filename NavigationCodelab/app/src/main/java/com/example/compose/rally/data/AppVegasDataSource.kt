@@ -32,20 +32,20 @@ class AppVegasDataSource(
 
     override fun fetchUserStringSet(source: UserSource, key: UserKeys.UserStringSetSourceKey): Set<String>? {
         return when (key) {
-            UserKeys.UserStringSetSourceKey.Target -> setOf("foo", "bar")
+            UserKeys.UserStringSetSourceKey.Target -> setOf("free")
         }
     }
 
     override fun fetchUserInt(source: UserSource, key: UserKeys.UserIntSourceKey): Int? {
         return when (key) {
-            UserKeys.UserIntSourceKey.Day -> LocalDate.now().dayOfYear
+            UserKeys.UserIntSourceKey.Day -> 9999
             UserKeys.UserIntSourceKey.DaysSinceAccountCreated -> 45
         }
     }
 
     override fun fetchUserBoolean(source: UserSource, key: UserKeys.UserBooleanSourceKey): Boolean? {
         return when (key) {
-            UserKeys.UserBooleanSourceKey.TrialState -> true
+            UserKeys.UserBooleanSourceKey.TrialState -> false
         }
     }
 
@@ -54,13 +54,8 @@ class AppVegasDataSource(
         key: PromotionHistoryKeys.PromotionHistoryIntSourceKey
     ): Int? {
         return when (key) {
-            is PromotionHistoryKeys.PromotionHistoryIntSourceKey.TimesShown -> {
-                // Access where clause parameters: key.historyType, key.id
-                when {
-                    key.historyType == "group" && key.id == "android-halloween-sale-premium" -> 1
-                    else -> 0
-                }
-            }
+            is PromotionHistoryKeys.PromotionHistoryIntSourceKey.TimesShown -> null
+
             is PromotionHistoryKeys.PromotionHistoryIntSourceKey.DaysSinceLastShown -> {
                 // Access where clause parameters: key.historyType, key.id
                 when {
