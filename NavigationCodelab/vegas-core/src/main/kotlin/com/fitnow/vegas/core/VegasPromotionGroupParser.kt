@@ -16,13 +16,10 @@
 
 package com.fitnow.vegas.core
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Represents a promotion group containing common rules and a list of promotions.
@@ -59,21 +56,47 @@ data class Promotion<C : VegasQueryDataSource>(
 
 /**
  * Data class for creative treatment information.
+ * Uses @Serializable for automatic JSON parsing.
  */
+@Serializable
 data class CreativeTreatmentData(
     val id: String,
-    val heroImageUrl: String?,
-    val titleText: String?,
-    val bodyText: String?,
-    val actionText: String?,
-    val buttonText: String?,
-    val noThanksText: String?,
-    val weight: Int
+    val heroImageUrl: String? = null,
+    val titleText: String? = null,
+    val bodyText: String? = null,
+    val actionText: String? = null,
+    val buttonText: String? = null,
+    val noThanksText: String? = null,
+    val weight: Int = 1
+)
+
+/**
+ * JSON schema representation for promotions.
+ * Used for automatic deserialization before transforming to the typed domain object.
+ */
+@Serializable
+internal data class PromotionJson(
+    val id: String,
+    val actionUrl: String? = null,
+    @SerialName("rulesV2") val rules: JsonArray = JsonArray(emptyList()),
+    val creativeTreatments: List<CreativeTreatmentData> = emptyList()
+)
+
+/**
+ * JSON schema representation for promotion groups.
+ */
+@Serializable
+internal data class PromotionGroupJson(
+    val id: String,
+    val type: String,
+    @SerialName("commonRulesV2") val commonRules: JsonArray = JsonArray(emptyList()),
+    val promotions: List<PromotionJson> = emptyList()
 )
 
 /**
  * Parser for Vegas promotion groups from JSON format.
- * Parses the entire promotion group structure including common rules and individual promotions.
+ * Uses @Serializable classes for automatic parsing of simple fields,
+ * while rules are parsed manually due to their dynamic typed nature.
  *
  * @param C The specific VegasQueryDataSource implementation
  * @property registry The registry used to resolve string-based key references
@@ -109,63 +132,24 @@ class VegasPromotionGroupParser<C : VegasQueryDataSource>(
      * @throws IllegalArgumentException if the JSON format is invalid
      */
     fun parse(jsonString: String): PromotionGroup<C> {
-        val rootObject = json.parseToJsonElement(jsonString).jsonObject
+        // Use @Serializable DTO for automatic parsing of structure
+        val dto = json.decodeFromString<PromotionGroupJson>(jsonString)
 
-        val id = rootObject["id"]?.jsonPrimitive?.content
-            ?: throw IllegalArgumentException("PromotionGroup missing 'id' field")
-        val type = rootObject["type"]?.jsonPrimitive?.content
-            ?: throw IllegalArgumentException("PromotionGroup missing 'type' field")
-
-        // Parse common rules
-        val commonRulesArray = rootObject["commonRulesV2"]?.jsonArray ?: JsonArray(emptyList())
-        val commonRules = ruleParser.parseRulesArray(commonRulesArray)
-
-        // Parse promotions
-        val promotionsArray = rootObject["promotions"]?.jsonArray ?: JsonArray(emptyList())
-        val promotions = promotionsArray.map { parsePromotion(it.jsonObject) }
-
+        // Transform DTO to domain object, parsing rules manually
         return PromotionGroup(
-            id = id,
-            type = type,
-            commonRules = commonRules,
-            promotions = promotions
+            id = dto.id,
+            type = dto.type,
+            commonRules = ruleParser.parseRulesArray(dto.commonRules),
+            promotions = dto.promotions.map { it.toDomain() }
         )
     }
 
-    private fun parsePromotion(promoJson: JsonObject): Promotion<C> {
-        val id = promoJson["id"]?.jsonPrimitive?.content
-            ?: throw IllegalArgumentException("Promotion missing 'id' field")
-        val actionUrl = promoJson["actionUrl"]?.jsonPrimitive?.content
-
-        // Parse promotion-specific rules
-        val rulesArray = promoJson["rulesV2"]?.jsonArray ?: JsonArray(emptyList())
-        val rules = ruleParser.parseRulesArray(rulesArray)
-
-        // Parse creative treatments
-        val creativeTreatmentsArray = promoJson["creativeTreatments"]?.jsonArray ?: JsonArray(emptyList())
-        val creativeTreatments = creativeTreatmentsArray.map { parseCreativeTreatment(it.jsonObject) }
-
-        return Promotion(
-            id = id,
-            actionUrl = actionUrl,
-            rules = rules,
-            creativeTreatments = creativeTreatments
-        )
-    }
-
-    private fun parseCreativeTreatment(treatmentJson: JsonObject): CreativeTreatmentData {
-        return CreativeTreatmentData(
-            id = treatmentJson["id"]?.jsonPrimitive?.content
-                ?: throw IllegalArgumentException("CreativeTreatment missing 'id' field"),
-            heroImageUrl = treatmentJson["heroImageUrl"]?.jsonPrimitive?.content,
-            titleText = treatmentJson["titleText"]?.jsonPrimitive?.content,
-            bodyText = treatmentJson["bodyText"]?.jsonPrimitive?.content,
-            actionText = treatmentJson["actionText"]?.jsonPrimitive?.content,
-            buttonText = treatmentJson["buttonText"]?.jsonPrimitive?.content,
-            noThanksText = treatmentJson["noThanksText"]?.jsonPrimitive?.content,
-            weight = treatmentJson["weight"]?.jsonPrimitive?.intOrNull ?: 1
-        )
-    }
+    private fun PromotionJson.toDomain(): Promotion<C> = Promotion(
+        id = id,
+        actionUrl = actionUrl,
+        rules = ruleParser.parseRulesArray(rules),
+        creativeTreatments = creativeTreatments
+    )
 }
 
 /**
