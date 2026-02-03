@@ -1,0 +1,18 @@
+{
+  "rules": [
+    {
+      "source": "User",
+      "key": "trial_state",
+      "operator": "equals",
+      "value": true,
+      "default": false
+    },
+    {
+      "source": "History",
+      "key": "times_shown",
+      "operator": "lt",
+      "value": 3,
+      "default": 0
+    }
+  ]
+}

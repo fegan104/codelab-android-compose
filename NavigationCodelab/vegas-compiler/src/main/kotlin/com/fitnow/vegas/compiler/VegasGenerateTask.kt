@@ -53,19 +53,19 @@ abstract class VegasGenerateTask : DefaultTask() {
             packageName = packageName.get()
         )
 
-        val generatedCode = generator.generate()
+        // Use KotlinPoet's FileSpec to write the generated code
+        val fileSpec = generator.generateFileSpec()
+        val outputDirectory = outputDir.get().asFile
 
-        // Create package directory structure
-        val packageDir = packageName.get().replace(".", "/")
-        val outputFile = outputDir.get().asFile
-            .resolve(packageDir)
-            .resolve("VegasGeneratedApi.kt")
-
-        outputFile.parentFile.mkdirs()
-        outputFile.writeText(generatedCode)
+        // KotlinPoet handles package directory structure automatically
+        fileSpec.writeTo(outputDirectory)
 
         val sourcesAndKeys = manifest.extractSourcesAndKeys()
         val totalKeys = sourcesAndKeys.values.sumOf { it.size }
+        val outputFile = outputDirectory
+            .resolve(packageName.get().replace(".", "/"))
+            .resolve("VegasGeneratedApi.kt")
+
         logger.lifecycle("Vegas: Generated ${sourcesAndKeys.size} sources with $totalKeys keys")
         logger.lifecycle("Vegas: Output written to ${outputFile.absolutePath}")
     }

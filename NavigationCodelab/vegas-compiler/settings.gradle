@@ -1,0 +1,16 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = 'vegas-compiler'
+
+// Include vegas-core as a composite build
+includeBuild('../vegas-core') {
+    dependencySubstitution {
+        substitute module('com.fitnow.vegas:vegas-core') using project(':')
+    }
+}
