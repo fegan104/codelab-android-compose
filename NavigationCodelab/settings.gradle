@@ -19,12 +19,8 @@ pluginManagement {
     includeBuild('vegas-compiler')
 }
 
-// Include vegas-core as a composite build so both app and vegas-compiler can use it
-includeBuild('vegas-core') {
-    dependencySubstitution {
-        substitute module('com.fitnow.vegas:vegas-core') using project(':')
-    }
-}
+// Include vegas-core as a regular module
+include ':vegas-core'
 
 include ':app'
 include ':vegas-ui'
