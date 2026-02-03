@@ -246,6 +246,8 @@ class VegasCodeGenerator(
             .parameterizedBy(pairType, sourceKeyWildcard)
         val sourceMapType = Map::class.asTypeName()
             .parameterizedBy(String::class.asTypeName(), querySourceType)
+        val whereParamsType = Map::class.asTypeName()
+            .parameterizedBy(String::class.asTypeName(), String::class.asTypeName())
 
         return TypeSpec.objectBuilder("GeneratedVegasSourceKeyRegistry")
             .addKdoc("Registry for looking up generated SourceKeys by source and key names.")
@@ -272,6 +274,17 @@ class VegasCodeGenerator(
                     .build()
             )
             .addFunction(
+                FunSpec.builder("createKeyWithWhere")
+                    .addKdoc("Creates a parameterized SourceKey using where clause parameters.")
+                    .addModifiers(KModifier.OVERRIDE)
+                    .addParameter("sourceName", String::class)
+                    .addParameter("keyName", String::class)
+                    .addParameter("whereParams", whereParamsType)
+                    .returns(sourceKeyWildcard.copy(nullable = true))
+                    .addCode(buildCreateKeyWithWhereBody())
+                    .build()
+            )
+            .addFunction(
                 FunSpec.builder("findSource")
                     .addModifiers(KModifier.OVERRIDE)
                     .addParameter("sourceName", String::class)
@@ -279,6 +292,34 @@ class VegasCodeGenerator(
                     .addStatement("return sourceMap[sourceName]")
                     .build()
             )
+            .build()
+    }
+
+    /**
+     * Builds the body of createKeyWithWhere that handles parameterized keys.
+     */
+    private fun buildCreateKeyWithWhereBody(): CodeBlock {
+        return CodeBlock.builder()
+            .beginControlFlow("return when")
+            .apply {
+                sourcesAndKeys.forEach { (sourceName, keys) ->
+                    val pascalSourceName = sourceName.toPascalCase()
+                    keys.filter { it.hasWhereClause }.forEach { keyInfo ->
+                        val sealedClassName = "${pascalSourceName}${keyInfo.type.displayName}SourceKey"
+                        val keyClassName = keyInfo.name.toPascalCase()
+                        addStatement(
+                            "sourceName == %S && keyName == %S -> %L",
+                            sourceName,
+                            keyInfo.name,
+                            "${pascalSourceName}Keys.$sealedClassName.$keyClassName(" +
+                                "historyType = whereParams[\"historyType\"] ?: \"\", " +
+                                "id = whereParams[\"id\"] ?: \"\")"
+                        )
+                    }
+                }
+            }
+            .addStatement("else -> null")
+            .endControlFlow()
             .build()
     }
 

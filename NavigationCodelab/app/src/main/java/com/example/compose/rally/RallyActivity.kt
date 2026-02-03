@@ -33,7 +33,10 @@ import com.example.compose.rally.ui.components.RallyTabRow
 import com.example.compose.rally.ui.theme.RallyTheme
 import com.example.compose.rally.generated.GeneratedVegasDataSource
 import com.example.compose.rally.generated.GeneratedVegasSourceKeyRegistry
+import com.fitnow.vegas.core.Promotion
+import com.fitnow.vegas.core.VegasPromotionGroupParser
 import com.fitnow.vegas.core.VegasRuleParser
+import com.fitnow.vegas.core.findPromotion
 
 /**
  * This Activity recreates part of the Rally Material Study from
@@ -43,7 +46,7 @@ class RallyActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val appDataSource = AppVegasDataSource()
-        val vegasEnabled = evaluateVegasRules(appDataSource)
+        val vegasEnabled = findPromotion(appDataSource)
         setContent {
             RallyApp()
         }
@@ -70,11 +73,13 @@ fun RallyApp() {
     }
 }
 
-private fun ComponentActivity.evaluateVegasRules(appDataSource: GeneratedVegasDataSource): Boolean {
-    val rulesJson = resources.assets.open("dashboard-promo.json")
+private fun ComponentActivity.findPromotion(
+    appDataSource: GeneratedVegasDataSource
+): Promotion<GeneratedVegasDataSource>? {
+    val promoGroupJson = resources.assets.open("dashboard-promo.json")
         .bufferedReader()
         .use { it.readText() }
-    val parser = VegasRuleParser(GeneratedVegasSourceKeyRegistry)
-    val rules = parser.parse(rulesJson)
-    return rules.all { it.evaluate(appDataSource) }
+    val parser = VegasPromotionGroupParser(GeneratedVegasSourceKeyRegistry)
+    val promoGroup = parser.parse(promoGroupJson)
+    return findPromotion(promoGroup, appDataSource)
 }

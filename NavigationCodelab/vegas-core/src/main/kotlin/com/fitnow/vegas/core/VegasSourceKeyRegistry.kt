@@ -33,6 +33,21 @@ interface VegasSourceKeyRegistry<C : VegasQueryDataSource> {
     fun findKey(sourceName: String, keyName: String): SourceKey<C, *, *>?
 
     /**
+     * Creates a parameterized SourceKey with where clause parameters.
+     * Override this method in generated registries to support keys with where clauses.
+     *
+     * @param sourceName The name of the QuerySource
+     * @param keyName The name of the key within that source
+     * @param whereParams Map of where clause parameter names to values (e.g., "historyType" to "group")
+     * @return The parameterized SourceKey, or null if not supported
+     */
+    fun createKeyWithWhere(
+        sourceName: String,
+        keyName: String,
+        whereParams: Map<String, String>
+    ): SourceKey<C, *, *>? = null
+
+    /**
      * Finds the QuerySource instance for the given source name.
      *
      * @param sourceName The name of the QuerySource

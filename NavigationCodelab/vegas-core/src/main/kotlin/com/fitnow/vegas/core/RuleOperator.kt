@@ -64,66 +64,6 @@ data object IntLessThanOrEquals : IntOperator {
 }
 
 // ============================================================================
-// Long Operators
-// ============================================================================
-
-sealed interface LongOperator : RuleOperator<Long, Long>
-
-data object LongEquals : LongOperator {
-    override fun evaluate(lhs: Long, rhs: Long): Boolean = lhs == rhs
-}
-
-data object LongNotEquals : LongOperator {
-    override fun evaluate(lhs: Long, rhs: Long): Boolean = lhs != rhs
-}
-
-data object LongGreaterThan : LongOperator {
-    override fun evaluate(lhs: Long, rhs: Long): Boolean = lhs > rhs
-}
-
-data object LongGreaterThanOrEquals : LongOperator {
-    override fun evaluate(lhs: Long, rhs: Long): Boolean = lhs >= rhs
-}
-
-data object LongLessThan : LongOperator {
-    override fun evaluate(lhs: Long, rhs: Long): Boolean = lhs < rhs
-}
-
-data object LongLessThanOrEquals : LongOperator {
-    override fun evaluate(lhs: Long, rhs: Long): Boolean = lhs <= rhs
-}
-
-// ============================================================================
-// Double Operators
-// ============================================================================
-
-sealed interface DoubleOperator : RuleOperator<Double, Double>
-
-data object DoubleEquals : DoubleOperator {
-    override fun evaluate(lhs: Double, rhs: Double): Boolean = lhs == rhs
-}
-
-data object DoubleNotEquals : DoubleOperator {
-    override fun evaluate(lhs: Double, rhs: Double): Boolean = lhs != rhs
-}
-
-data object DoubleGreaterThan : DoubleOperator {
-    override fun evaluate(lhs: Double, rhs: Double): Boolean = lhs > rhs
-}
-
-data object DoubleGreaterThanOrEquals : DoubleOperator {
-    override fun evaluate(lhs: Double, rhs: Double): Boolean = lhs >= rhs
-}
-
-data object DoubleLessThan : DoubleOperator {
-    override fun evaluate(lhs: Double, rhs: Double): Boolean = lhs < rhs
-}
-
-data object DoubleLessThanOrEquals : DoubleOperator {
-    override fun evaluate(lhs: Double, rhs: Double): Boolean = lhs <= rhs
-}
-
-// ============================================================================
 // String Operators
 // ============================================================================
 
@@ -143,18 +83,6 @@ data object StringContains : StringOperator<String> {
 
 data object StringNotContains : StringOperator<String> {
     override fun evaluate(lhs: String, rhs: String): Boolean = !lhs.contains(rhs)
-}
-
-data object StringStartsWith : StringOperator<String> {
-    override fun evaluate(lhs: String, rhs: String): Boolean = lhs.startsWith(rhs)
-}
-
-data object StringEndsWith : StringOperator<String> {
-    override fun evaluate(lhs: String, rhs: String): Boolean = lhs.endsWith(rhs)
-}
-
-data object StringEqualsIgnoreCase : StringOperator<String> {
-    override fun evaluate(lhs: String, rhs: String): Boolean = lhs.equals(rhs, ignoreCase = true)
 }
 
 // ============================================================================

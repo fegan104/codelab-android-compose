@@ -36,7 +36,7 @@ import kotlinx.serialization.json.jsonPrimitive
 class VegasRuleParser<C : VegasQueryDataSource>(
     val registry: VegasSourceKeyRegistry<C>
 ) {
-    private val json = Json { ignoreUnknownKeys = true }
+    internal val json = Json { ignoreUnknownKeys = true }
 
     /**
      * Parses a JSON string into a list of Rules.
@@ -84,6 +84,17 @@ class VegasRuleParser<C : VegasQueryDataSource>(
             else -> throw IllegalArgumentException("Expected JSON array or object with rules array")
         }
 
+        return parseRulesArray(rulesArray)
+    }
+
+    /**
+     * Parses a JsonArray of rules into a list of Rule objects.
+     * Exposed for use by VegasPromotionGroupParser.
+     *
+     * @param rulesArray The JSON array containing rule definitions
+     * @return List of parsed Rules (rules with unknown keys are skipped)
+     */
+    internal fun parseRulesArray(rulesArray: JsonArray): List<Rule<C, *, *, *>> {
         return rulesArray.mapNotNull { ruleElement ->
             parseRule(ruleElement.jsonObject)
         }
@@ -104,12 +115,19 @@ class VegasRuleParser<C : VegasQueryDataSource>(
             ?: ruleJson["value"]
             ?: throw IllegalArgumentException("Rule missing 'rhs' field")
         val defaultElement = lhsObject?.get("default") ?: ruleJson["default"]
+        val whereObject = lhsObject?.get("where")?.jsonObject
         val sourceName = normalizeSourceName(sourceNameRaw)
         val keyName = normalizeKeyName(keyNameRaw)
 
-        // Look up the key from the registry
-        val sourceKey = registry.findKey(sourceName, keyName)
-            ?: return null // Key not found, skip this rule
+        // Look up the key from the registry - use createKeyWithWhere if where clause exists
+        val sourceKey = if (whereObject != null) {
+            val whereParams = whereObject.entries.associate { (k, v) ->
+                k to v.jsonPrimitive.content
+            }
+            registry.createKeyWithWhere(sourceName, keyName, whereParams)
+        } else {
+            registry.findKey(sourceName, keyName)
+        } ?: return null // Key not found, skip this rule
 
         val source = resolveSource(sourceName)
 
@@ -267,21 +285,13 @@ class VegasRuleParser<C : VegasQueryDataSource>(
     }
 
     private fun normalizeSourceName(sourceName: String): String {
-        return when (sourceName) {
-            "user" -> "User"
-            "history" -> "History"
-            "promotionHistory" -> "History"
-            else -> sourceName.replaceFirstChar { char ->
-                if (char.isLowerCase()) char.titlecase() else char.toString()
-            }
-        }
+        // Pass through as-is - registry should use the raw JSON source names
+        return sourceName
     }
 
     private fun normalizeKeyName(keyName: String): String {
-        if (keyName.contains("_")) {
-            return keyName
-        }
-        return keyName.replace(Regex("([a-z0-9])([A-Z])"), "$1_$2").lowercase()
+        // Pass through as-is - registry should use the raw JSON key names
+        return keyName
     }
 
     private fun resolveSource(sourceName: String): QuerySource {
