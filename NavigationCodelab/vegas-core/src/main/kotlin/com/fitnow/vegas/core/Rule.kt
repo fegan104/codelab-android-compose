@@ -3,7 +3,7 @@ package com.fitnow.vegas.core
 /**
  * Represents a query that can resolve a value from a data source.
  *
- * @param C The specific VegasQueryDataSource implementation
+ * @param D The specific VegasQueryDataSource implementation
  * @param S The specific QuerySource type
  * @param L The type of value being queried
  * @property source The query source to resolve from
@@ -20,7 +20,7 @@ data class RuleQuery<D: QueryDataSource, S : QuerySource, L>(
  * Represents a rule that evaluates a condition against data from a source.
  * The generic parameters ensure type safety without runtime casts.
  *
- * @param C The specific VegasQueryDataSource implementation
+ * @param D The specific VegasQueryDataSource implementation
  * @param S The specific QuerySource type
  * @param E The type of the equation's values
  * @property operator The operator used to compare values

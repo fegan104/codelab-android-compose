@@ -13,11 +13,11 @@ import kotlinx.serialization.json.jsonPrimitive
  * Parser for Vegas rules from JSON format.
  * Uses the registry to look up SourceKeys and construct typed Rule instances.
  *
- * @param C The specific VegasQueryDataSource implementation
+ * @param D The specific VegasQueryDataSource implementation
  * @property registry The registry used to resolve string-based key references
  */
-class VegasRuleParser<C : QueryDataSource>(
-    val registry: VegasSourceKeyRegistry<C>
+class VegasRuleParser<D : QueryDataSource>(
+    val registry: VegasSourceKeyRegistry<D>
 ) {
     /**
      * Parses a JsonArray of rules into a list of Rule objects.
@@ -26,13 +26,13 @@ class VegasRuleParser<C : QueryDataSource>(
      * @param rulesArray The JSON array containing rule definitions
      * @return List of parsed Rules (rules with unknown keys are skipped)
      */
-    internal fun parseRulesArray(rulesArray: JsonArray): List<Rule<C, *, *>> {
+    internal fun parseRulesArray(rulesArray: JsonArray): List<Rule<D, *, *>> {
         return rulesArray.mapNotNull { ruleElement ->
             parseRule(ruleElement.jsonObject)
         }
     }
 
-    private fun parseRule(ruleJson: JsonObject): Rule<C, *, *>? {
+    private fun parseRule(ruleJson: JsonObject): Rule<D, *, *>? {
         val lhsObject = ruleJson["lhs"]?.jsonObject
             ?: throw IllegalArgumentException("Rule missing 'lhs' field")
         val sourceName = lhsObject["source"]?.jsonPrimitive?.content
@@ -41,12 +41,13 @@ class VegasRuleParser<C : QueryDataSource>(
             ?: throw IllegalArgumentException("Rule missing 'key' field")
         val operatorName = ruleJson["operator"]?.jsonPrimitive?.content
             ?: throw IllegalArgumentException("Rule missing 'operator' field")
-        val valueElement = ruleJson["rhs"] ?: throw IllegalArgumentException("Rule missing 'rhs' field")
+        val valueElement =
+            ruleJson["rhs"] ?: throw IllegalArgumentException("Rule missing 'rhs' field")
         val defaultElement = lhsObject["default"] ?: ruleJson["default"]
         val whereObject = lhsObject["where"]?.jsonObject
 
         // Look up the key from the registry - use createKeyWithWhere if where clause exists
-        val sourceKey: SourceKey<C, *> = if (whereObject != null) {
+        val sourceKey: SourceKey<D, *> = if (whereObject != null) {
             val whereParams = whereObject.entries.associate { (k, v) ->
                 k to v.jsonPrimitive.content
             }
@@ -60,7 +61,7 @@ class VegasRuleParser<C : QueryDataSource>(
         // Determine the type and create the appropriate rule
         return when (sourceKey) {
             is IntSourceKey<*> -> createIntRule(
-                sourceKey as IntSourceKey<C>,
+                sourceKey as IntSourceKey<D>,
                 operatorName,
                 valueElement,
                 defaultElement,
@@ -68,7 +69,7 @@ class VegasRuleParser<C : QueryDataSource>(
             )
 
             is StringSourceKey<*> -> createStringRule(
-                sourceKey as StringSourceKey<C>,
+                sourceKey as StringSourceKey<D>,
                 operatorName,
                 valueElement,
                 defaultElement,
@@ -76,7 +77,7 @@ class VegasRuleParser<C : QueryDataSource>(
             )
 
             is BooleanSourceKey<*> -> createBooleanRule(
-                sourceKey as BooleanSourceKey<C>,
+                sourceKey as BooleanSourceKey<D>,
                 operatorName,
                 valueElement,
                 defaultElement,
@@ -84,7 +85,7 @@ class VegasRuleParser<C : QueryDataSource>(
             )
 
             is StringSetSourceKey<*> -> createStringSetRule(
-                sourceKey as StringSetSourceKey<C>,
+                sourceKey as StringSetSourceKey<D>,
                 operatorName,
                 valueElement,
                 defaultElement,
@@ -94,12 +95,12 @@ class VegasRuleParser<C : QueryDataSource>(
     }
 
     private fun createIntRule(
-        key: IntSourceKey<C>,
+        key: IntSourceKey<D>,
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
         source: QuerySource
-    ): Rule<C, QuerySource, Int> {
+    ): Rule<D, QuerySource, Int> {
         val operator = parseIntOperator(operatorName)
         val value = valueElement.jsonPrimitive.intOrNull
             ?: throw IllegalArgumentException("Expected integer value for int rule")
@@ -113,32 +114,30 @@ class VegasRuleParser<C : QueryDataSource>(
     }
 
     private fun createStringRule(
-        key: StringSourceKey<C>,
+        key: StringSourceKey<D>,
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
         source: QuerySource
-    ): Rule<C, QuerySource, String> {
+    ): Rule<D, QuerySource, String> {
         val operator = parseStringOperator(operatorName)
         val value = valueElement.jsonPrimitive.content
         val default = defaultElement?.jsonPrimitive?.content
 
-        @Suppress("UNCHECKED_CAST")
-        val typedOperator = operator
         return Rule(
-            operator = typedOperator,
+            operator = operator,
             rhs = value,
             lhs = RuleQuery(source, key, default)
         )
     }
 
     private fun createBooleanRule(
-        key: BooleanSourceKey<C>,
+        key: BooleanSourceKey<D>,
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
         source: QuerySource
-    ): Rule<C, QuerySource, Boolean> {
+    ): Rule<D, QuerySource, Boolean> {
         val operator = parseBooleanOperator(operatorName)
         val value = valueElement.jsonPrimitive.booleanOrNull
             ?: throw IllegalArgumentException("Expected boolean value for boolean rule")
@@ -152,12 +151,12 @@ class VegasRuleParser<C : QueryDataSource>(
     }
 
     private fun createStringSetRule(
-        key: StringSetSourceKey<C>,
+        key: StringSetSourceKey<D>,
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
         source: QuerySource
-    ): Rule<C, QuerySource, Set<String>> {
+    ): Rule<D, QuerySource, Set<String>> {
         val operator = parseStringSetOperator(operatorName)
         val values = valueElement.jsonArray.map { it.jsonPrimitive.content }.toSet()
         val default = defaultElement?.jsonArray?.map { it.jsonPrimitive.content }?.toSet()

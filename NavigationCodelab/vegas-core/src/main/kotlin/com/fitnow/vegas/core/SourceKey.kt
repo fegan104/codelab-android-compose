@@ -14,7 +14,7 @@ sealed interface SourceKey<D : QueryDataSource, out T> {
      * @param dataSource The typed data source (not the base interface)
      * @return The resolved value, or null if not available
      */
-    fun resolve(dataSource: D ): T?
+    fun resolve(dataSource: D): T?
 }
 
 /**
