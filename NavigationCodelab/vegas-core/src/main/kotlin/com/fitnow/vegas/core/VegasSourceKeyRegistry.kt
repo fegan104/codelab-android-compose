@@ -27,10 +27,10 @@ interface VegasSourceKeyRegistry<C : VegasQueryDataSource> {
      * Finds a SourceKey by its source name and key name.
      *
      * @param sourceName The name of the QuerySource
-     * @param keyName The name of the key within that source
+     * @param raw The name of the key within that source
      * @return The matching SourceKey, or null if not found
      */
-    fun findKey(sourceName: String, keyName: String): SourceKey<C, *, *>?
+    fun findKey(sourceName: String, raw: String): SourceKey<C, *, *>?
 
     /**
      * Creates a parameterized SourceKey with where clause parameters.

@@ -1,19 +1,3 @@
-/*
- * Copyright 2026 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.fitnow.vegas.core
 
 /**
@@ -38,16 +22,15 @@ data class RuleQuery<C : VegasQueryDataSource, S : QuerySource, L>(
  *
  * @param C The specific VegasQueryDataSource implementation
  * @param S The specific QuerySource type
- * @param L The type of the left-hand side value
- * @param R The type of the right-hand side value
+ * @param E The type of the equation's values
  * @property operator The operator used to compare values
  * @property rhs The right-hand side value (constant from rule definition)
  * @property lhs The left-hand side query (resolved from data source)
  */
-data class Rule<C : VegasQueryDataSource, S : QuerySource, L, R>(
-    val operator: RuleOperator<L, R>,
-    val rhs: R,
-    val lhs: RuleQuery<C, S, L>
+data class Rule<C : VegasQueryDataSource, S : QuerySource, E>(
+    val operator: RuleOperator<E>,
+    val rhs: E,
+    val lhs: RuleQuery<C, S, E>
 ) {
     /**
      * Evaluates this rule against the provided data source.

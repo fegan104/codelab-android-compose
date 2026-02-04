@@ -20,6 +20,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlin.collections.all
 
 /**
  * Represents a promotion group containing common rules and a list of promotions.
@@ -34,7 +35,7 @@ import kotlinx.serialization.json.JsonArray
 data class PromotionGroup<C : VegasQueryDataSource>(
     val id: String,
     val type: String,
-    val commonRules: List<Rule<C, *, *, *>>,
+    val commonRules: List<Rule<C, *, *>>,
     val promotions: List<Promotion<C>>
 )
 
@@ -50,7 +51,7 @@ data class PromotionGroup<C : VegasQueryDataSource>(
 data class Promotion<C : VegasQueryDataSource>(
     val id: String,
     val actionUrl: String?,
-    val rules: List<Rule<C, *, *, *>>,
+    val rules: List<Rule<C, *, *>>,
     val creativeTreatments: List<Creative>
 )
 
