@@ -10,9 +10,9 @@ package com.fitnow.vegas.core
  * @property key The source key used to resolve the value
  * @property defaultValue The default value if resolution returns null
  */
-data class RuleQuery<C : VegasQueryDataSource, S : QuerySource, L>(
+data class RuleQuery<D: QueryDataSource, S : QuerySource, L>(
     val source: S,
-    val key: SourceKey<C, S, L>,
+    val key: SourceKey<D, L>,
     val defaultValue: L?
 )
 
@@ -27,16 +27,16 @@ data class RuleQuery<C : VegasQueryDataSource, S : QuerySource, L>(
  * @property rhs The right-hand side value (constant from rule definition)
  * @property lhs The left-hand side query (resolved from data source)
  */
-data class Rule<C : VegasQueryDataSource, S : QuerySource, E>(
+data class Rule<D : QueryDataSource, S : QuerySource, E>(
     val operator: RuleOperator<E>,
     val rhs: E,
-    val lhs: RuleQuery<C, S, E>
+    val lhs: RuleQuery<D, S, E>
 ) {
     /**
      * Evaluates this rule against the provided data source.
      *
      * The evaluation flow:
-     * 1. Resolve the LHS value using the key and source from the query
+     * 1. Resolve the LHS value using the key from the query
      * 2. If null, use the default value from the query
      * 3. If still null, return false (cannot evaluate)
      * 4. Apply the operator to compare LHS with RHS
@@ -44,9 +44,9 @@ data class Rule<C : VegasQueryDataSource, S : QuerySource, E>(
      * @param dataSource The typed data source to evaluate against (no casting needed!)
      * @return true if the rule condition is satisfied, false otherwise
      */
-    fun evaluate(dataSource: C): Boolean {
+    fun evaluate(dataSource: D): Boolean {
         // Resolve the value from the data source - no casting needed!
-        val resolvedValue = lhs.key.resolve(dataSource, lhs.source)
+        val resolvedValue = lhs.key.resolve(dataSource)
 
         // Use resolved value or fall back to default
         val lhsValue = resolvedValue ?: lhs.defaultValue

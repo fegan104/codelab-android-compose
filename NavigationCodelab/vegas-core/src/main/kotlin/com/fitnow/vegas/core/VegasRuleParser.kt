@@ -1,6 +1,5 @@
 package com.fitnow.vegas.core
 
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -17,7 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * @param C The specific VegasQueryDataSource implementation
  * @property registry The registry used to resolve string-based key references
  */
-class VegasRuleParser<C : VegasQueryDataSource>(
+class VegasRuleParser<C : QueryDataSource>(
     val registry: VegasSourceKeyRegistry<C>
 ) {
     /**
@@ -33,7 +32,6 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         }
     }
 
-//    @Suppress("UNCHECKED_CAST")
     private fun parseRule(ruleJson: JsonObject): Rule<C, *, *>? {
         val lhsObject = ruleJson["lhs"]?.jsonObject
             ?: throw IllegalArgumentException("Rule missing 'lhs' field")
@@ -48,7 +46,7 @@ class VegasRuleParser<C : VegasQueryDataSource>(
         val whereObject = lhsObject["where"]?.jsonObject
 
         // Look up the key from the registry - use createKeyWithWhere if where clause exists
-        val sourceKey = if (whereObject != null) {
+        val sourceKey: SourceKey<C, *> = if (whereObject != null) {
             val whereParams = whereObject.entries.associate { (k, v) ->
                 k to v.jsonPrimitive.content
             }
@@ -61,32 +59,32 @@ class VegasRuleParser<C : VegasQueryDataSource>(
 
         // Determine the type and create the appropriate rule
         return when (sourceKey) {
-            is IntSourceKey<*, *> -> createIntRule(
-                sourceKey as SourceKey<C, QuerySource, Int>,
+            is IntSourceKey<*> -> createIntRule(
+                sourceKey as IntSourceKey<C>,
                 operatorName,
                 valueElement,
                 defaultElement,
                 source
             )
 
-            is StringSourceKey<*, *> -> createStringRule(
-                sourceKey as SourceKey<C, QuerySource, String>,
+            is StringSourceKey<*> -> createStringRule(
+                sourceKey as StringSourceKey<C>,
                 operatorName,
                 valueElement,
                 defaultElement,
                 source
             )
 
-            is BooleanSourceKey<*, *> -> createBooleanRule(
-                sourceKey as SourceKey<C, QuerySource, Boolean>,
+            is BooleanSourceKey<*> -> createBooleanRule(
+                sourceKey as BooleanSourceKey<C>,
                 operatorName,
                 valueElement,
                 defaultElement,
                 source
             )
 
-            is StringSetSourceKey<*, *> -> createStringSetRule(
-                sourceKey as SourceKey<C, QuerySource, Set<String>>,
+            is StringSetSourceKey<*> -> createStringSetRule(
+                sourceKey as StringSetSourceKey<C>,
                 operatorName,
                 valueElement,
                 defaultElement,
@@ -96,7 +94,7 @@ class VegasRuleParser<C : VegasQueryDataSource>(
     }
 
     private fun createIntRule(
-        key: SourceKey<C, QuerySource, Int>,
+        key: IntSourceKey<C>,
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
@@ -115,7 +113,7 @@ class VegasRuleParser<C : VegasQueryDataSource>(
     }
 
     private fun createStringRule(
-        key: SourceKey<C, QuerySource, String>,
+        key: StringSourceKey<C>,
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
@@ -135,7 +133,7 @@ class VegasRuleParser<C : VegasQueryDataSource>(
     }
 
     private fun createBooleanRule(
-        key: SourceKey<C, QuerySource, Boolean>,
+        key: BooleanSourceKey<C>,
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
@@ -154,7 +152,7 @@ class VegasRuleParser<C : VegasQueryDataSource>(
     }
 
     private fun createStringSetRule(
-        key: SourceKey<C, QuerySource, Set<String>>,
+        key: StringSetSourceKey<C>,
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,

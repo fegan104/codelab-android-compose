@@ -98,7 +98,6 @@ class VegasCodeGenerator(
                             FunSpec.builder("fetch${pascalSourceName}${type.displayName}")
                                 .addKdoc("Fetches a ${type.displayName} value for the given key from $sourceName.")
                                 .addModifiers(KModifier.ABSTRACT)
-                                .addParameter("source", sourceClassName)
                                 .addParameter("key", sourceKeyClassName)
                                 .returns(type.kotlinTypeName.copy(nullable = true))
                                 .build()
@@ -124,7 +123,7 @@ class VegasCodeGenerator(
                 keysByType.forEach { (type, typeKeys) ->
                     val sealedClassName = "${pascalSourceName}${type.displayName}SourceKey"
                     val sourceKeyInterface = ClassName(vegasCorePackage, type.sourceKeyInterface)
-                        .parameterizedBy(generatedDataSourceType, sourceClassName)
+                        .parameterizedBy(generatedDataSourceType)
 
                     // Sealed parent class
                     val sealedClass = TypeSpec.classBuilder(sealedClassName)
@@ -140,10 +139,9 @@ class VegasCodeGenerator(
                             FunSpec.builder("resolve")
                                 .addModifiers(KModifier.OVERRIDE)
                                 .addParameter("dataSource", generatedDataSourceType)
-                                .addParameter("source", sourceClassName)
                                 .returns(type.kotlinTypeName.copy(nullable = true))
                                 .addStatement(
-                                    "return dataSource.fetch${pascalSourceName}${type.displayName}(source, this)"
+                                    "return dataSource.fetch${pascalSourceName}${type.displayName}(this)"
                                 )
                                 .build()
                         )
@@ -231,7 +229,6 @@ class VegasCodeGenerator(
         val registryInterface = vegasSourceKeyRegistryType.parameterizedBy(generatedDataSourceType)
         val sourceKeyWildcard = sourceKeyType.parameterizedBy(
             generatedDataSourceType,
-            STAR,
             STAR
         )
         val pairType = Pair::class.asTypeName()

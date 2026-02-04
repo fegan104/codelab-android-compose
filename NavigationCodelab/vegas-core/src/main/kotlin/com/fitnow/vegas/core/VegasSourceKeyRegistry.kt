@@ -22,7 +22,7 @@ package com.fitnow.vegas.core
  *
  * @param C The specific VegasQueryDataSource implementation this registry is bound to.
  */
-interface VegasSourceKeyRegistry<C : VegasQueryDataSource> {
+interface VegasSourceKeyRegistry<C : QueryDataSource> {
     /**
      * Finds a SourceKey by its source name and key name.
      *
@@ -30,7 +30,7 @@ interface VegasSourceKeyRegistry<C : VegasQueryDataSource> {
      * @param raw The name of the key within that source
      * @return The matching SourceKey, or null if not found
      */
-    fun findKey(sourceName: String, raw: String): SourceKey<C, *, *>?
+    fun findKey(sourceName: String, raw: String): SourceKey<C, *>?
 
     /**
      * Creates a parameterized SourceKey with where clause parameters.
@@ -45,7 +45,7 @@ interface VegasSourceKeyRegistry<C : VegasQueryDataSource> {
         sourceName: String,
         keyName: String,
         whereParams: Map<String, String>
-    ): SourceKey<C, *, *>? = null
+    ): SourceKey<C, *>? = null
 
     /**
      * Finds the QuerySource instance for the given source name.

@@ -4,37 +4,35 @@ package com.fitnow.vegas.core
  * A typed key that can resolve a value from a data source.
  * The generic parameters ensure type safety without runtime casts.
  *
- * @param C The specific VegasQueryDataSource implementation
- * @param S The specific QuerySource type this key operates on
+ * @param D The specific QueryDataSource implementation
  * @param T The type of value this key resolves to (covariant)
  */
-sealed interface SourceKey<C : VegasQueryDataSource, S : QuerySource, out T> {
+sealed interface SourceKey<D : QueryDataSource, out T> {
     /**
-     * Resolves the value from the given data source and query source.
+     * Resolves the value from the given data source.
      *
      * @param dataSource The typed data source (not the base interface)
-     * @param source The query source to resolve from
      * @return The resolved value, or null if not available
      */
-    fun resolve(dataSource: C, source: S): T?
+    fun resolve(dataSource: D ): T?
 }
 
 /**
  * Marker interface for SourceKeys that resolve to Int values.
  */
-interface IntSourceKey<C : VegasQueryDataSource, S : QuerySource> : SourceKey<C, S, Int>
+interface IntSourceKey<D : QueryDataSource> : SourceKey<D, Int>
 
 /**
  * Marker interface for SourceKeys that resolve to String values.
  */
-interface StringSourceKey<C : VegasQueryDataSource, S : QuerySource> : SourceKey<C, S, String>
+interface StringSourceKey<D : QueryDataSource> : SourceKey<D, String>
 
 /**
  * Marker interface for SourceKeys that resolve to Boolean values.
  */
-interface BooleanSourceKey<C : VegasQueryDataSource, S : QuerySource> : SourceKey<C, S, Boolean>
+interface BooleanSourceKey<D : QueryDataSource> : SourceKey<D, Boolean>
 
 /**
  * Marker interface for SourceKeys that resolve to Set<String> values.
  */
-interface StringSetSourceKey<C : VegasQueryDataSource, S : QuerySource> : SourceKey<C, S, Set<String>>
+interface StringSetSourceKey<D : QueryDataSource> : SourceKey<D, Set<String>>

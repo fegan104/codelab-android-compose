@@ -32,7 +32,7 @@ import kotlin.collections.all
  * @property commonRules Rules that must all pass before evaluating individual promotions
  * @property promotions List of promotions to evaluate in priority order (first match wins)
  */
-data class PromotionGroup<C : VegasQueryDataSource>(
+data class PromotionGroup<C : QueryDataSource>(
     val id: String,
     val type: String,
     val commonRules: List<Rule<C, *, *>>,
@@ -48,7 +48,7 @@ data class PromotionGroup<C : VegasQueryDataSource>(
  * @property rules Rules specific to this promotion that must all pass
  * @property creativeTreatments Available creative treatments for display
  */
-data class Promotion<C : VegasQueryDataSource>(
+data class Promotion<C : QueryDataSource>(
     val id: String,
     val actionUrl: String?,
     val rules: List<Rule<C, *, *>>,
@@ -102,7 +102,7 @@ internal data class PromotionGroupJson(
  * @param C The specific VegasQueryDataSource implementation
  * @property registry The registry used to resolve string-based key references
  */
-class VegasPromotionGroupParser<C : VegasQueryDataSource>(
+class VegasPromotionGroupParser<C : QueryDataSource>(
     private val registry: VegasSourceKeyRegistry<C>
 ) {
     private val json = Json { ignoreUnknownKeys = true }
@@ -168,7 +168,7 @@ class VegasPromotionGroupParser<C : VegasQueryDataSource>(
  * @param dataSource The data source to evaluate rules against
  * @return The first matching Promotion, or null if no promotion qualifies
  */
-fun <C : VegasQueryDataSource> findPromotion(
+fun <C : QueryDataSource> findPromotion(
     promoGroup: PromotionGroup<C>,
     dataSource: C
 ): Promotion<C>? {
