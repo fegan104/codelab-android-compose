@@ -47,7 +47,7 @@ class VegasRuleParser<D : QueryDataSource>(
         val whereObject = lhsObject["where"]?.jsonObject
 
         // Look up the key from the registry - use createKeyWithWhere if where clause exists
-        val sourceKey: SourceKey<D, *> = if (whereObject != null) {
+        val sourceKey = if (whereObject != null) {
             val whereParams = whereObject.entries.associate { (k, v) ->
                 k to v.jsonPrimitive.content
             }
@@ -60,32 +60,32 @@ class VegasRuleParser<D : QueryDataSource>(
 
         // Determine the type and create the appropriate rule
         return when (sourceKey) {
-            is IntSourceKey<*> -> createIntRule(
-                sourceKey as IntSourceKey<D>,
+            is IntSourceKey -> createIntRule(
+                sourceKey,
                 operatorName,
                 valueElement,
                 defaultElement,
                 source
             )
 
-            is StringSourceKey<*> -> createStringRule(
-                sourceKey as StringSourceKey<D>,
+            is StringSourceKey -> createStringRule(
+                sourceKey,
                 operatorName,
                 valueElement,
                 defaultElement,
                 source
             )
 
-            is BooleanSourceKey<*> -> createBooleanRule(
-                sourceKey as BooleanSourceKey<D>,
+            is BooleanSourceKey -> createBooleanRule(
+                sourceKey,
                 operatorName,
                 valueElement,
                 defaultElement,
                 source
             )
 
-            is StringSetSourceKey<*> -> createStringSetRule(
-                sourceKey as StringSetSourceKey<D>,
+            is StringSetSourceKey -> createStringSetRule(
+                sourceKey,
                 operatorName,
                 valueElement,
                 defaultElement,
