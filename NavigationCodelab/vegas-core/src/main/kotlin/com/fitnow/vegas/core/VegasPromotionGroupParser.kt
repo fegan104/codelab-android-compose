@@ -20,38 +20,37 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
-import kotlin.collections.all
 
 /**
  * Represents a promotion group containing common rules and a list of promotions.
  * The common rules must all pass before any individual promotion is evaluated.
  *
- * @param C The specific VegasQueryDataSource implementation
+ * @param D The specific VegasQueryDataSource implementation
  * @property id The unique identifier for this promotion group
  * @property type The type of promotion group (e.g., "affiliate")
  * @property commonRules Rules that must all pass before evaluating individual promotions
  * @property promotions List of promotions to evaluate in priority order (first match wins)
  */
-data class PromotionGroup<C : QueryDataSource>(
+data class PromotionGroup<D : QueryDataSource>(
     val id: String,
     val type: String,
-    val commonRules: List<Rule<C, *, *>>,
-    val promotions: List<Promotion<C>>
+    val commonRules: List<Rule<D, *, *>>,
+    val promotions: List<Promotion<D>>
 )
 
 /**
  * Represents a single promotion within a promotion group.
  *
- * @param C The specific VegasQueryDataSource implementation
+ * @param D The specific VegasQueryDataSource implementation
  * @property id The unique identifier for this promotion
  * @property actionUrl Optional action URL for this promotion
  * @property rules Rules specific to this promotion that must all pass
  * @property creativeTreatments Available creative treatments for display
  */
-data class Promotion<C : QueryDataSource>(
+data class Promotion<D : QueryDataSource>(
     val id: String,
     val actionUrl: String?,
-    val rules: List<Rule<C, *, *>>,
+    val rules: List<Rule<D, *, *>>,
     val creativeTreatments: List<Creative>
 )
 
@@ -102,8 +101,8 @@ internal data class PromotionGroupJson(
  * @param C The specific VegasQueryDataSource implementation
  * @property registry The registry used to resolve string-based key references
  */
-class VegasPromotionGroupParser<C : QueryDataSource>(
-    private val registry: VegasSourceKeyRegistry<C>
+class VegasPromotionGroupParser<D : QueryDataSource>(
+    private val registry: VegasSourceKeyRegistry<D>
 ) {
     private val json = Json { ignoreUnknownKeys = true }
     private val ruleParser = VegasRuleParser(registry)
@@ -132,7 +131,7 @@ class VegasPromotionGroupParser<C : QueryDataSource>(
      * @return Parsed PromotionGroup
      * @throws IllegalArgumentException if the JSON format is invalid
      */
-    fun parse(jsonString: String): PromotionGroup<C> {
+    fun parse(jsonString: String): PromotionGroup<D> {
         // Use @Serializable DTO for automatic parsing of structure
         val dto = json.decodeFromString<PromotionGroupJson>(jsonString)
 
@@ -145,7 +144,7 @@ class VegasPromotionGroupParser<C : QueryDataSource>(
         )
     }
 
-    private fun PromotionJson.toDomain(): Promotion<C> = Promotion(
+    private fun PromotionJson.toDomain(): Promotion<D> = Promotion(
         id = id,
         actionUrl = actionUrl,
         rules = ruleParser.parseRulesArray(rules),
@@ -168,10 +167,10 @@ class VegasPromotionGroupParser<C : QueryDataSource>(
  * @param dataSource The data source to evaluate rules against
  * @return The first matching Promotion, or null if no promotion qualifies
  */
-fun <C : QueryDataSource> findPromotion(
-    promoGroup: PromotionGroup<C>,
-    dataSource: C
-): Promotion<C>? {
+fun <D : QueryDataSource> findPromotion(
+    promoGroup: PromotionGroup<D>,
+    dataSource: D
+): Promotion<D>? {
     // Step 1: Evaluate all common rules first
     // If any common rule fails, the entire group fails
     val commonRulesPassed = promoGroup.commonRules.all { rule ->
