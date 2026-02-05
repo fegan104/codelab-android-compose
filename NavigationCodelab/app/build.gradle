@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 /*
  * Copyright 2022 The Android Open Source Project
  *
@@ -118,7 +120,7 @@ dependencies {
     debugImplementation "androidx.compose.ui:ui-test-manifest"
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+tasks.withType(KotlinCompile).configureEach {
     kotlinOptions {
         // Treat all Kotlin warnings as errors
         allWarningsAsErrors = true
@@ -131,6 +133,6 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
 }
 
 vegas {
-    manifestFile = file("src/main/assets/dashboard-promo.json")
+    promotionsDirectory = file("src/main/assets")
     packageName = "com.example.compose.rally.generated"
 }

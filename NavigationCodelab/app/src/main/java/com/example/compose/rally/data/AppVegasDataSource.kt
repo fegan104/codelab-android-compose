@@ -3,6 +3,7 @@ package com.example.compose.rally.data
 import com.example.compose.rally.generated.ConfigurationKeys
 import com.example.compose.rally.generated.GeneratedVegasDataSource
 import com.example.compose.rally.generated.PromotionHistoryKeys
+import com.example.compose.rally.generated.SurveyHistoryKeys
 import com.example.compose.rally.generated.UserKeys
 import com.fitnow.vegas.core.Promotion
 import com.fitnow.vegas.core.PromotionGroup
@@ -12,6 +13,15 @@ import java.time.LocalDate
 class AppVegasDataSource(
     private val config: Configuration = Configuration()
 ) : GeneratedVegasDataSource {
+
+    override fun fetchSurveyHistoryInt(key: SurveyHistoryKeys.SurveyHistoryIntSourceKey): Int? {
+        return when (key) {
+            is SurveyHistoryKeys.SurveyHistoryIntSourceKey.DaysSinceLastShown -> {
+                key.historyType
+                3
+            }
+        }
+    }
 
     override fun <D : QueryDataSource> appRules(
         group: PromotionGroup<D>,

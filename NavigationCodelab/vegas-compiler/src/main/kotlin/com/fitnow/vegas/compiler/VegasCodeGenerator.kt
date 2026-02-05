@@ -21,10 +21,9 @@ import com.squareup.kotlinpoet.asTypeName
  * - GeneratedVegasSourceKeyRegistry for string-to-key lookups
  */
 class VegasCodeGenerator(
-    manifest: VegasManifest,
+    private val sourcesAndKeys: Map<String, Set<SourceKeyInfo>>,
     private val packageName: String = "com.fitnow.vegas.generated"
 ) {
-    private val sourcesAndKeys: Map<String, Set<SourceKeyInfo>> = manifest.extractSourcesAndKeys()
 
     // Core type references
     private val vegasCorePackage = "com.fitnow.vegas.core"

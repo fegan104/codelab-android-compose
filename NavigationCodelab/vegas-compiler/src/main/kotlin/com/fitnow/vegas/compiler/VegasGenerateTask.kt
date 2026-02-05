@@ -7,7 +7,7 @@ import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.InputFile
+import org.gradle.api.tasks.InputDirectory
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.PathSensitive
 import org.gradle.api.tasks.PathSensitivity
@@ -20,11 +20,11 @@ import org.gradle.api.tasks.TaskAction
 abstract class VegasGenerateTask : DefaultTask() {
 
     /**
-     * The input JSON manifest file.
+     * The input directory containing JSON manifest files.
      */
-    @get:InputFile
+    @get:InputDirectory
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    abstract val manifestFile: RegularFileProperty
+    abstract val promotionsDirectory: DirectoryProperty
 
     /**
      * The package name for generated code.
@@ -45,11 +45,24 @@ abstract class VegasGenerateTask : DefaultTask() {
 
     @TaskAction
     fun generate() {
-        val manifestContent = manifestFile.get().asFile.readText()
-        val manifest = json.decodeFromString<VegasManifest>(manifestContent)
+        val directory = promotionsDirectory.get().asFile
+        val jsonFiles = directory.listFiles { file -> file.extension == "json" } ?: emptyArray()
+
+        val aggregatedSourcesAndKeys = mutableMapOf<String, MutableSet<SourceKeyInfo>>()
+
+        jsonFiles.forEach { file ->
+            val content = file.readText()
+            val manifest = json.decodeFromString<VegasManifest>(content)
+            val fileSources = manifest.extractSourcesAndKeys()
+
+            fileSources.forEach { (source, keys) ->
+                aggregatedSourcesAndKeys.getOrPut(source) { mutableSetOf() }
+                    .addAll(keys)
+            }
+        }
 
         val generator = VegasCodeGenerator(
-            manifest = manifest,
+            sourcesAndKeys = aggregatedSourcesAndKeys,
             packageName = packageName.get()
         )
 
@@ -60,13 +73,13 @@ abstract class VegasGenerateTask : DefaultTask() {
         // KotlinPoet handles package directory structure automatically
         fileSpec.writeTo(outputDirectory)
 
-        val sourcesAndKeys = manifest.extractSourcesAndKeys()
-        val totalKeys = sourcesAndKeys.values.sumOf { it.size }
+        val totalKeys = aggregatedSourcesAndKeys.values.sumOf { it.size }
         val outputFile = outputDirectory
             .resolve(packageName.get().replace(".", "/"))
             .resolve("VegasGeneratedApi.kt")
 
-        logger.lifecycle("Vegas: Generated ${sourcesAndKeys.size} sources with $totalKeys keys")
+        logger.lifecycle("Vegas: Parsed ${jsonFiles.size} manifest files")
+        logger.lifecycle("Vegas: Generated ${aggregatedSourcesAndKeys.size} sources with $totalKeys keys")
         logger.lifecycle("Vegas: Output written to ${outputFile.absolutePath}")
     }
 }

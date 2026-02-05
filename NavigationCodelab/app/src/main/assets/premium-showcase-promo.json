@@ -1,0 +1,260 @@
+{
+  "id": "premium-showcase",
+  "type": "affiliate",
+  "commonRulesV2": [
+    {
+      "comment": "targets: [free]",
+      "operator": "stringSetAnyMatch",
+      "lhs": {
+        "source": "user",
+        "key": "target"
+      },
+      "rhs": [
+        "free"
+      ]
+    },
+    {
+      "comment": "min eligible date 2024-10-31",
+      "operator": "intGreaterThanOrEqualTo",
+      "lhs": {
+        "source": "surveyHistory",
+        "key": "daysSinceLastShown",
+        "where": {
+          "survey-name": "androidReactivationOnboardingV2",
+          "step-name": "welcomeBack"
+        }
+      },
+      "rhs": 8705
+    },
+    {
+      "comment": "current subscription is not a trial.",
+      "operator": "bool",
+      "lhs": {
+        "source": "user",
+        "key": "trialState",
+        "default": false
+      },
+      "rhs": false
+    },
+    {
+      "_comment_": "only show once",
+      "operator": "intLessThan",
+      "lhs": {
+        "source": "promotionHistory",
+        "key": "timesShown",
+        "where": {
+          "historyType": "group",
+          "id": "android-halloween-sale-premium"
+        },
+        "default": 0
+      },
+      "rhs": 1
+    },
+    {
+      "comment": "3 days after account creation. Note that IAMs will be suppressed if user in a Trial",
+      "operator": "intGreaterThanOrEqualTo",
+      "lhs": {
+        "source": "user",
+        "key": "daysSinceAccountCreated",
+        "default": 0
+      },
+      "rhs": 3
+    }
+  ],
+  "promotions": [
+    {
+      "id": "androidHalloweenSalePremium-Control",
+      "actionUrl": "loseit://upgrade",
+      "rulesV2": [
+        {
+          "comment": "Show only if experiment is on and gets Premium discount with a 24 hour timer.",
+          "operator": "bool",
+          "lhs": {
+            "source": "configuration",
+            "key": "androidPremiumTimerTest"
+          },
+          "rhs": false
+        },
+        {
+          "comment": "daysSinceLastShown(type: android-premium-flash-sale): 21. At least 21 days since user last saw the Premium flash sale IAM",
+          "operator": "intGreaterThanOrEqualTo",
+          "lhs": {
+            "source": "promotionHistory",
+            "key": "daysSinceLastShown",
+            "where": {
+              "historyType": "group",
+              "id": "android-premium-flash-sale"
+            },
+            "default": 100
+          },
+          "rhs": 21
+        },
+        {
+          "comment": "daysSinceLastShown(type: sale): 1. At least 1 days since user last saw sale Premium IAM",
+          "operator": "intGreaterThanOrEqualTo",
+          "lhs": {
+            "source": "promotionHistory",
+            "key": "daysSinceLastShown",
+            "where": {
+              "historyType": "type",
+              "id": "sale"
+            },
+            "default": 100
+          },
+          "rhs": 1
+        },
+        {
+          "comment": "daysSinceLastShown(type: nonsale): 1. At least 1 days since user last saw nonsale Premium IAM",
+          "operator": "intGreaterThanOrEqualTo",
+          "lhs": {
+            "source": "promotionHistory",
+            "key": "daysSinceLastShown",
+            "where": {
+              "historyType": "type",
+              "id": "nonsale"
+            },
+            "default": 100
+          },
+          "rhs": 1
+        },
+        {
+          "comment": "daysSinceLastShown(group: new-users): 3. 3 Day cool off period between new user IAMs",
+          "operator": "intGreaterThanOrEqualTo",
+          "lhs": {
+            "source": "promotionHistory",
+            "key": "daysSinceLastShown",
+            "where": {
+              "historyType": "group",
+              "id": "new-users"
+            },
+            "default": 100
+          },
+          "rhs": 3
+        },
+        {
+          "comment": "daysSinceLastShown(group: reac-users): 3. 3 Day cool off period between reactivated premium IAMs",
+          "operator": "intGreaterThanOrEqualTo",
+          "lhs": {
+            "source": "promotionHistory",
+            "key": "daysSinceLastShown",
+            "where": {
+              "historyType": "group",
+              "id": "reac-users"
+            },
+            "default": 100
+          },
+          "rhs": 3
+        }
+      ],
+      "creativeTreatments": [
+        {
+          "id": "jan23-lifetime-presale-fireworks",
+          "heroImageUrl": "https://assets.loseit.com/2022/lifetimefireworks68.gif",
+          "titleText": "68% Off Flash Sale",
+          "bodyText": "Who says we can't celebrate the New Year early? Upgrade now to save 68% and get the very best version of Lose It! for life.",
+          "actionText": "",
+          "buttonText": "Save 68%",
+          "noThanksText": "No thanks",
+          "weight": 1
+        }
+      ]
+    },
+    {
+      "id": "androidHalloweenSalePremium-Treatment",
+      "actionUrl": "loseit://upgrade",
+      "rulesV2": [
+        {
+          "_comment1": "Show only if experiment is on and gets Premium discount with a 1 hour timer.",
+          "operator": "bool",
+          "lhs": {
+            "source": "configuration",
+            "key": "androidPremiumTimerTest"
+          },
+          "rhs": true
+        },
+        {
+          "comment": "daysSinceLastShown(type: android-premium-flash-sale): 21. At least 21 days since user last saw the Premium flash sale IAM",
+          "operator": "intGreaterThanOrEqualTo",
+          "lhs": {
+            "source": "promotionHistory",
+            "key": "daysSinceLastShown",
+            "where": {
+              "historyType": "group",
+              "id": "android-premium-flash-sale"
+            },
+            "default": 100
+          },
+          "rhs": 21
+        },
+        {
+          "comment": "daysSinceLastShown(type: sale): 1. At least 1 days since user last saw sale Premium IAM",
+          "operator": "intGreaterThanOrEqualTo",
+          "lhs": {
+            "source": "promotionHistory",
+            "key": "daysSinceLastShown",
+            "where": {
+              "historyType": "type",
+              "id": "sale"
+            },
+            "default": 100
+          },
+          "rhs": 1
+        },
+        {
+          "comment": "daysSinceLastShown(type: nonsale): 1. At least 1 days since user last saw nonsale Premium IAM",
+          "operator": "intGreaterThanOrEqualTo",
+          "lhs": {
+            "source": "promotionHistory",
+            "key": "daysSinceLastShown",
+            "where": {
+              "historyType": "type",
+              "id": "nonsale"
+            },
+            "default": 100
+          },
+          "rhs": 1
+        },
+        {
+          "comment": "daysSinceLastShown(group: new-users): 3. 3 Day cool off period between new user IAMs",
+          "operator": "intGreaterThanOrEqualTo",
+          "lhs": {
+            "source": "promotionHistory",
+            "key": "daysSinceLastShown",
+            "where": {
+              "historyType": "group",
+              "id": "new-users"
+            },
+            "default": 100
+          },
+          "rhs": 3
+        },
+        {
+          "comment": "daysSinceLastShown(group: reac-users): 3. 3 Day cool off period between reactivated premium IAMs",
+          "operator": "intGreaterThanOrEqualTo",
+          "lhs": {
+            "source": "promotionHistory",
+            "key": "daysSinceLastShown",
+            "where": {
+              "historyType": "group",
+              "id": "reac-users"
+            },
+            "default": 100
+          },
+          "rhs": 3
+        }
+      ],
+      "creativeTreatments": [
+        {
+          "id": "jan23-lifetime-presale-fireworks",
+          "heroImageUrl": "https://assets.loseit.com/2022/lifetimefireworks68.gif",
+          "titleText": "68% Off Flash Sale",
+          "bodyText": "Who says we can't celebrate the New Year early? Upgrade now to save 68% and get the very best version of Lose It! for life.",
+          "actionText": "",
+          "buttonText": "Save 68%",
+          "noThanksText": "No thanks",
+          "weight": 1
+        }
+      ]
+    }
+  ]
+}

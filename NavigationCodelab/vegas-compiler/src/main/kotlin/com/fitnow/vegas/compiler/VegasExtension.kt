@@ -1,6 +1,6 @@
 package com.fitnow.vegas.compiler
 
-import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property
 
 /**
@@ -9,16 +9,17 @@ import org.gradle.api.provider.Property
  * Usage in build.gradle:
  * ```
  * vegas {
- *     manifestFile = file("src/main/resources/vegas-manifest.json")
+ *     promotionsDirectory = file("src/main/resources/vegas")
  *     packageName = "com.example.app.generated"
  * }
  * ```
  */
 interface VegasExtension {
     /**
-     * The JSON manifest file that defines sources and keys.
+     * The directory containing JSON promotion manifests.
+     * All .json files in this directory will be parsed.
      */
-    val manifestFile: RegularFileProperty
+    val promotionsDirectory: DirectoryProperty
 
     /**
      * The package name for generated code.

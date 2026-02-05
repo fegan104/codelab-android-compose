@@ -21,7 +21,7 @@ import org.gradle.api.tasks.SourceSetContainer
  * }
  *
  * vegas {
- *     manifestFile = file("src/main/resources/vegas-manifest.json")
+ *     promotionsDirectory = file("src/main/resources/vegas")
  *     packageName = "com.example.generated"
  * }
  * ```
@@ -46,10 +46,10 @@ class VegasPlugin : Plugin<Project> {
             "generateVegasApi",
             VegasGenerateTask::class.java
         ) { task ->
-            task.description = "Generates type-safe Vegas API from JSON manifest"
+            task.description = "Generates type-safe Vegas API from JSON manifests"
             task.group = "vegas"
 
-            task.manifestFile.set(extension.manifestFile)
+            task.promotionsDirectory.set(extension.promotionsDirectory)
             task.packageName.set(extension.packageName)
             task.outputDir.set(outputDir)
         }
@@ -58,9 +58,7 @@ class VegasPlugin : Plugin<Project> {
         project.afterEvaluate {
             // For Kotlin JVM projects
             project.extensions.findByType(SourceSetContainer::class.java)?.let { sourceSets ->
-                sourceSets.findByName("main")?.let { sourceSet ->
-                    sourceSet.java.srcDir(outputDir)
-                }
+                sourceSets.findByName("main")?.java?.srcDir(outputDir)
             }
 
             // For Android projects (configured via reflection to avoid AGP dependency)
