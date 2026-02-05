@@ -24,22 +24,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.compose.rally.data.AppVegasDataSource
-import com.example.compose.rally.ui.components.RallyTabRow
-import com.example.compose.rally.ui.theme.RallyTheme
 import com.example.compose.rally.generated.GeneratedVegasDataSource
 import com.example.compose.rally.generated.GeneratedVegasSourceKeyRegistry
-import com.fitnow.vegas.ui.PromotionCreative
+import com.example.compose.rally.ui.components.RallyTabRow
+import com.example.compose.rally.ui.theme.RallyTheme
 import com.fitnow.vegas.core.Promotion
 import com.fitnow.vegas.core.VegasPromotionGroupParser
-import com.fitnow.vegas.core.VegasRuleParser
 import com.fitnow.vegas.core.findPromotion
+import com.fitnow.vegas.core.weightedRandom
+import com.fitnow.vegas.ui.PromotionCreative
 
 /**
  * This Activity recreates part of the Rally Material Study from
@@ -55,9 +55,13 @@ class RallyActivity : ComponentActivity() {
             }
             RallyApp {
                 promotion?.let { promo ->
-                    PromotionCreative(promo.creativeTreatments.random(), onDismissClick = {
-                        promotion = null
-                    })
+                    PromotionCreative(
+                        creative = promo.creativeTreatments.weightedRandom(),
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        onDismissClick = {
+                            promotion = null
+                        }
+                    )
                 }
             }
         }
@@ -94,6 +98,6 @@ private fun ComponentActivity.findPromotion(
         .bufferedReader()
         .use { it.readText() }
     val parser = VegasPromotionGroupParser(GeneratedVegasSourceKeyRegistry)
-    val promoGroup = parser.parse(promoGroupJson)
+    val promoGroup = parser.parse(promoGroupJson).getOrThrow()
     return findPromotion(promoGroup, appDataSource)
 }

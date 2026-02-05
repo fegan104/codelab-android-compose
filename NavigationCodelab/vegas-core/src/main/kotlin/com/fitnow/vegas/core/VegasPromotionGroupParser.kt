@@ -1,19 +1,3 @@
-/*
- * Copyright 2026 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package com.fitnow.vegas.core
 
 import kotlinx.serialization.SerialName
@@ -53,6 +37,30 @@ data class Promotion<D : QueryDataSource>(
     val rules: List<Rule<D, *, *>>,
     val creativeTreatments: List<Creative>
 )
+
+/**
+ * Selects a random Creative from the list based on the weight of each item.
+ *
+ * If the list is empty, throws [NoSuchElementException].
+ *
+ * @return A randomly selected [Creative], with probability proportional to its weight.
+ */
+fun List<Creative>.weightedRandom(): Creative {
+    if (isEmpty()) throw NoSuchElementException("List is empty.")
+
+    val totalWeight = sumOf { it.weight }
+    if (totalWeight <= 0) return random()
+
+    val cutoff = (0..totalWeight).random()
+    var sum = 0
+    for (creative in this) {
+        sum += creative.weight
+        if (sum > cutoff) return creative
+    }
+
+    return first()
+}
+
 
 /**
  * Data class for creative treatment information.
@@ -98,7 +106,7 @@ internal data class PromotionGroupJson(
  * Uses @Serializable classes for automatic parsing of simple fields,
  * while rules are parsed manually due to their dynamic typed nature.
  *
- * @param C The specific VegasQueryDataSource implementation
+ * @param D The specific VegasQueryDataSource implementation
  * @property registry The registry used to resolve string-based key references
  */
 class VegasPromotionGroupParser<D : QueryDataSource>(
@@ -128,19 +136,19 @@ class VegasPromotionGroupParser<D : QueryDataSource>(
      * ```
      *
      * @param jsonString The JSON string to parse
-     * @return Parsed PromotionGroup
-     * @throws IllegalArgumentException if the JSON format is invalid
+     * @return A Result with a parsed PromotionGroup if parsing succeeds or a Result.failure is JSON
+     * file  is invalid.
      */
-    fun parse(jsonString: String): PromotionGroup<D> {
+    fun parse(jsonString: String): Result<PromotionGroup<D>> = runCatching {
         // Use @Serializable DTO for automatic parsing of structure
-        val dto = json.decodeFromString<PromotionGroupJson>(jsonString)
+        val jsonObject = json.decodeFromString<PromotionGroupJson>(jsonString)
 
-        // Transform DTO to domain object, parsing rules manually
-        return PromotionGroup(
-            id = dto.id,
-            type = dto.type,
-            commonRules = ruleParser.parseRulesArray(dto.commonRules),
-            promotions = dto.promotions.map { it.toDomain() }
+        // Transform json object to domain object, parsing rules manually
+        PromotionGroup(
+            id = jsonObject.id,
+            type = jsonObject.type,
+            commonRules = ruleParser.parseRulesArray(jsonObject.commonRules),
+            promotions = jsonObject.promotions.map { it.toDomain() }
         )
     }
 
@@ -150,49 +158,4 @@ class VegasPromotionGroupParser<D : QueryDataSource>(
         rules = ruleParser.parseRulesArray(rules),
         creativeTreatments = creativeTreatments
     )
-}
-
-/**
- * Evaluates a promotion group against a data source and returns the first matching promotion.
- *
- * Evaluation logic:
- * 1. First, evaluate all commonRulesV2 - if any fail, return null immediately
- * 2. If all common rules pass, evaluate each promotion in order (priority)
- * 3. For each promotion, evaluate all its rules - if any fail, skip to the next promotion
- * 4. Return the first promotion where all rules pass
- * 5. If no promotion matches, return null
- *
- * @param C The specific VegasQueryDataSource implementation
- * @param promoGroup The promotion group to evaluate
- * @param dataSource The data source to evaluate rules against
- * @return The first matching Promotion, or null if no promotion qualifies
- */
-fun <D : QueryDataSource> findPromotion(
-    promoGroup: PromotionGroup<D>,
-    dataSource: D
-): Promotion<D>? {
-    // Step 1: Evaluate all common rules first
-    // If any common rule fails, the entire group fails
-    val commonRulesPassed = promoGroup.commonRules.all { rule ->
-        rule.evaluate(dataSource)
-    }
-
-    if (!commonRulesPassed) {
-        return null
-    }
-
-    // Step 2: Evaluate promotions in priority order (list order = priority)
-    // Return the first promotion where all rules pass
-    for (promotion in promoGroup.promotions) {
-        val promotionRulesPassed = promotion.rules.all { rule ->
-            rule.evaluate(dataSource)
-        }
-
-        if (promotionRulesPassed) {
-            return promotion
-        }
-    }
-
-    // No promotion matched
-    return null
 }

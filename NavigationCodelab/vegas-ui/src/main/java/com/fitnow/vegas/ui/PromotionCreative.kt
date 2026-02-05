@@ -53,10 +53,7 @@ fun PromotionCreative(
     onActionClick: () -> Unit = {},
     onDismissClick: () -> Unit = {}
 ) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        elevation = 4.dp
-    ) {
+    Card(modifier = modifier.fillMaxWidth()) {
         Column {
             // Hero image (if available)
             creative.heroImageUrl?.let { imageUrl ->

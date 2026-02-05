@@ -16,7 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * @param D The specific VegasQueryDataSource implementation
  * @property registry The registry used to resolve string-based key references
  */
-class VegasRuleParser<D : QueryDataSource>(
+internal class VegasRuleParser<D : QueryDataSource>(
     val registry: VegasSourceKeyRegistry<D>
 ) {
     /**

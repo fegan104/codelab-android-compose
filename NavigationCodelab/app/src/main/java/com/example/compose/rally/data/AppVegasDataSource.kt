@@ -4,12 +4,21 @@ import com.example.compose.rally.generated.ConfigurationKeys
 import com.example.compose.rally.generated.GeneratedVegasDataSource
 import com.example.compose.rally.generated.PromotionHistoryKeys
 import com.example.compose.rally.generated.UserKeys
+import com.fitnow.vegas.core.Promotion
+import com.fitnow.vegas.core.PromotionGroup
+import com.fitnow.vegas.core.QueryDataSource
 import java.time.LocalDate
-import java.util.Calendar
 
 class AppVegasDataSource(
     private val config: Configuration = Configuration()
 ) : GeneratedVegasDataSource {
+
+    override fun <D : QueryDataSource> appRules(
+        group: PromotionGroup<D>,
+        promotion: Promotion<D>
+    ): Boolean {
+        return LocalDate.now() != LocalDate.of(2024, 10, 31) || group.id == "halloween"
+    }
 
     override fun fetchUserStringSet(key: UserKeys.UserStringSetSourceKey): Set<String>? {
         return when (key) {

@@ -16,9 +16,7 @@ sealed interface RuleOperator<E> {
     fun evaluate(lhs: E, rhs: E): Boolean
 }
 
-// ============================================================================
-// Int Operators
-// ============================================================================
+// region Int Operators
 
 sealed interface IntOperator : RuleOperator<Int>
 
@@ -46,9 +44,9 @@ data object IntLessThanOrEquals : IntOperator {
     override fun evaluate(lhs: Int, rhs: Int): Boolean = lhs <= rhs
 }
 
-// ============================================================================
-// String Operators
-// ============================================================================
+// endregion
+
+// region String Operators
 
 sealed interface StringOperator : RuleOperator<String>
 
@@ -68,9 +66,9 @@ data object StringNotContains : StringOperator {
     override fun evaluate(lhs: String, rhs: String): Boolean = !lhs.contains(rhs)
 }
 
-// ============================================================================
-// Set<String> Operators
-// ============================================================================
+// endregion
+
+// region Set<String> Operators
 
 /**
  * Operators that compare a Set<String> against some right-hand side value.
@@ -95,14 +93,16 @@ data object StringSetNotEquivalent : SetStringOperator {
  * Checks if the left-hand set is a subset of the right-hand list.
  */
 data object StringSetIsSubset : SetStringOperator {
-    override fun evaluate(lhs: Set<String>, rhs: Set<String>): Boolean = rhs.toSet().containsAll(lhs)
+    override fun evaluate(lhs: Set<String>, rhs: Set<String>): Boolean =
+        rhs.toSet().containsAll(lhs)
 }
 
 /**
  * Checks if the left-hand set is not a subset of the right-hand list.
  */
 data object StringSetNotIsSubset : SetStringOperator {
-    override fun evaluate(lhs: Set<String>, rhs: Set<String>): Boolean = !rhs.toSet().containsAll(lhs)
+    override fun evaluate(lhs: Set<String>, rhs: Set<String>): Boolean =
+        !rhs.toSet().containsAll(lhs)
 }
 
 /**
@@ -133,9 +133,9 @@ data object StringSetNotAnyMatch : SetStringOperator {
     override fun evaluate(lhs: Set<String>, rhs: Set<String>): Boolean = lhs.none { it in rhs }
 }
 
-// ============================================================================
-// Boolean Operators
-// ============================================================================
+// endregion
+
+// region Boolean Operators
 
 sealed interface BooleanOperator : RuleOperator<Boolean>
 
@@ -146,3 +146,5 @@ data object BooleanEquals : BooleanOperator {
 data object BooleanNotEquals : BooleanOperator {
     override fun evaluate(lhs: Boolean, rhs: Boolean): Boolean = lhs != rhs
 }
+
+// endregion
