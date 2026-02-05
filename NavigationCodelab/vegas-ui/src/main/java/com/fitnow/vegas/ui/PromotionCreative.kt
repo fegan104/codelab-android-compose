@@ -36,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.fitnow.vegas.core.Creative
+import com.fitnow.vegas.core.QueryDataSource
 
 /**
  * A composable that displays a [Creative] in a card format with the relevant
@@ -47,11 +48,40 @@ import com.fitnow.vegas.core.Creative
  * @param onDismissClick Callback when the dismiss/no thanks button is clicked
  */
 @Composable
-fun PromotionCreative(
+fun <D: QueryDataSource> PromotionCreative(
+    vegas: Vegas<D>,
     creative: Creative,
     modifier: Modifier = Modifier,
     onActionClick: () -> Unit = {},
     onDismissClick: () -> Unit = {}
+) {
+
+    PromotionCreative(
+        creative = creative,
+        modifier = modifier,
+        onActionClick = onActionClick,
+        onDismissClick = {
+            vegas.onDismiss()
+            onDismissClick()
+        },
+    )
+}
+
+/**
+ * A composable that displays a [Creative] in a card format with the relevant
+ * text content and action buttons.
+ *
+ * @param creative The creative data to display
+ * @param modifier Modifier for the card
+ * @param onActionClick Callback when the primary action button is clicked
+ * @param onDismissClick Callback when the dismiss/no thanks button is clicked
+ */
+@Composable
+private fun PromotionCreative(
+    creative: Creative,
+    modifier: Modifier = Modifier,
+    onActionClick: () -> Unit = {},
+    onDismissClick: () -> Unit = {},
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column {

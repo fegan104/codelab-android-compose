@@ -19,25 +19,21 @@ package com.example.compose.rally
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.compose.rally.data.AppVegasDataSource
-import com.example.compose.rally.generated.GeneratedVegasDataSource
-import com.example.compose.rally.generated.GeneratedVegasSourceKeyRegistry
 import com.example.compose.rally.ui.components.RallyTabRow
 import com.example.compose.rally.ui.theme.RallyTheme
-import com.fitnow.vegas.core.Promotion
-import com.fitnow.vegas.core.VegasPromotionGroupParser
-import com.fitnow.vegas.core.findPromotion
 import com.fitnow.vegas.core.weightedRandom
 import com.fitnow.vegas.ui.PromotionCreative
 
@@ -48,19 +44,17 @@ import com.fitnow.vegas.ui.PromotionCreative
 class RallyActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val appDataSource = AppVegasDataSource()
+
         setContent {
-            var promotion by remember {
-                mutableStateOf(findPromotion(appDataSource))
-            }
+            val viewModel by viewModels<RallyViewModel>()
+            val promotion by viewModel.observePromo.collectAsState(null)
+
             RallyApp {
                 promotion?.let { promo ->
                     PromotionCreative(
+                        vegas = viewModel.vegas,
                         creative = promo.creativeTreatments.weightedRandom(),
                         modifier = Modifier.padding(horizontal = 16.dp),
-                        onDismissClick = {
-                            promotion = null
-                        }
                     )
                 }
             }
@@ -89,15 +83,4 @@ fun RallyApp(promoSlot: @Composable () -> Unit) {
             }
         }
     }
-}
-
-private fun ComponentActivity.findPromotion(
-    appDataSource: GeneratedVegasDataSource
-): Promotion<GeneratedVegasDataSource>? {
-    val promoGroupJson = resources.assets.open("dashboard-promo.json")
-        .bufferedReader()
-        .use { it.readText() }
-    val parser = VegasPromotionGroupParser(GeneratedVegasSourceKeyRegistry)
-    val promoGroup = parser.parse(promoGroupJson).getOrThrow()
-    return findPromotion(promoGroup, appDataSource)
 }
