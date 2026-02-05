@@ -29,7 +29,7 @@ class VegasCodeGenerator(
     // Core type references
     private val vegasCorePackage = "com.fitnow.vegas.core"
     private val querySourceType = ClassName(vegasCorePackage, "QuerySource")
-    private val vegasQueryDataSourceType = ClassName(vegasCorePackage, "VegasQueryDataSource")
+    private val queryDataSourceType = ClassName(vegasCorePackage, "QueryDataSource")
     private val vegasSourceKeyRegistryType = ClassName(vegasCorePackage, "VegasSourceKeyRegistry")
     private val sourceKeyType = ClassName(vegasCorePackage, "SourceKey")
     private val generatedDataSourceType = ClassName(packageName, "GeneratedVegasDataSource")
@@ -81,7 +81,7 @@ class VegasCodeGenerator(
                 Implement this interface to provide data for Vegas rules.
                 """.trimIndent()
             )
-            .addSuperinterface(vegasQueryDataSourceType)
+            .addSuperinterface(queryDataSourceType)
             .apply {
                 sourcesAndKeys.forEach { (sourceName, keys) ->
                     val pascalSourceName = sourceName.toPascalCase()

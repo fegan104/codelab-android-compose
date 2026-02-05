@@ -4,7 +4,7 @@ package com.fitnow.vegas.core
  * A typed key that can resolve a value from a data source.
  * The generic parameters ensure type safety without runtime casts.
  *
- * @param D The specific QueryDataSource implementation
+ * @param D The specific QueryDataSource implementation that this key resolves on.
  * @param T The type of value this key resolves to (covariant)
  */
 sealed interface SourceKey<D : QueryDataSource, out T> {
