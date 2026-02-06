@@ -29,7 +29,7 @@ class AppVegasDataSource(
     override fun fetchSurveyHistoryInt(key: SurveyHistoryKeys.SurveyHistoryIntSourceKey): Int? {
         return when (key) {
             is SurveyHistoryKeys.SurveyHistoryIntSourceKey.DaysSinceLastShown -> {
-                key.historyType
+                key.surveyName
                 3
             }
         }

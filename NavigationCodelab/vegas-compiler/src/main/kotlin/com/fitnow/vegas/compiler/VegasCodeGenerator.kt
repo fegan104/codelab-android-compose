@@ -112,7 +112,6 @@ class VegasCodeGenerator(
      */
     private fun generateKeyContainer(sourceName: String, keys: Set<SourceKeyInfo>): TypeSpec {
         val pascalSourceName = sourceName.toPascalCase()
-        val sourceClassName = ClassName(packageName, "${pascalSourceName}Source")
 
         return TypeSpec.objectBuilder("${pascalSourceName}Keys")
             .addKdoc("Container object for $sourceName source keys.")
@@ -162,28 +161,26 @@ class VegasCodeGenerator(
                                         )
                                         .build()
 
+                                    // Build constructor parameters and properties dynamically from where clause keys
+                                    val constructorBuilder = FunSpec.constructorBuilder()
+                                    val whereProperties = keyInfo.wherePropertyNames.map { jsonKey ->
+                                        val camelName = jsonKey.toCamelCase()
+                                        constructorBuilder.addParameter(camelName, String::class)
+                                        PropertySpec.builder(camelName, String::class)
+                                            .initializer(camelName)
+                                            .build()
+                                    }
+
                                     // Generate a data class with where clause parameters
                                     addType(
                                         TypeSpec.classBuilder(keyClassName)
                                             .addKdoc("Key for ${keyInfo.name} (${type.displayName}) with where clause parameters.")
                                             .addModifiers(KModifier.DATA)
                                             .superclass(superclassName)
-                                            .primaryConstructor(
-                                                FunSpec.constructorBuilder()
-                                                    .addParameter("historyType", String::class)
-                                                    .addParameter("id", String::class)
-                                                    .build()
-                                            )
-                                            .addProperty(
-                                                PropertySpec.builder("historyType", String::class)
-                                                    .initializer("historyType")
-                                                    .build()
-                                            )
-                                            .addProperty(
-                                                PropertySpec.builder("id", String::class)
-                                                    .initializer("id")
-                                                    .build()
-                                            )
+                                            .primaryConstructor(constructorBuilder.build())
+                                            .apply {
+                                                whereProperties.forEach { addProperty(it) }
+                                            }
                                             .addProperty(
                                                 PropertySpec.builder("raw", String::class)
                                                     .addModifiers(KModifier.OVERRIDE)
@@ -297,13 +294,16 @@ class VegasCodeGenerator(
                     keys.filter { it.hasWhereClause }.forEach { keyInfo ->
                         val sealedClassName = "${pascalSourceName}${keyInfo.type.displayName}SourceKey"
                         val keyClassName = keyInfo.name.toPascalCase()
+                        // Build constructor args dynamically from the where clause property names
+                        val constructorArgs = keyInfo.wherePropertyNames.joinToString(", ") { jsonKey ->
+                            val camelName = jsonKey.toCamelCase()
+                            "$camelName = whereParams[\"$jsonKey\"] ?: \"\""
+                        }
                         addStatement(
                             "sourceName == %S && keyName == %S -> %L",
                             sourceName,
                             keyInfo.name,
-                            "${pascalSourceName}Keys.$sealedClassName.$keyClassName(" +
-                                "historyType = whereParams[\"historyType\"] ?: \"\", " +
-                                "id = whereParams[\"id\"] ?: \"\")"
+                            "${pascalSourceName}Keys.$sealedClassName.$keyClassName($constructorArgs)"
                         )
                     }
                 }
@@ -410,11 +410,19 @@ private val KeyType.sourceKeyInterface: String
     }
 
 /**
- * Converts a snake_case or camelCase string to PascalCase.
+ * Converts a snake_case or kebab-case string to PascalCase.
  */
 private fun String.toPascalCase(): String {
     return split("_", "-")
         .joinToString("") { word ->
             word.replaceFirstChar { it.uppercase() }
         }
+}
+
+/**
+ * Converts a snake_case or kebab-case string to camelCase.
+ * E.g., "survey-name" -> "surveyName", "history_type" -> "historyType"
+ */
+private fun String.toCamelCase(): String {
+    return toPascalCase().replaceFirstChar { it.lowercase() }
 }

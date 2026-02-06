@@ -3,6 +3,7 @@ package com.fitnow.vegas.compiler
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 
 /**
  * Root model for the Vegas JSON manifest.
@@ -51,17 +52,8 @@ data class RuleDefinition(
 data class LhsDefinition(
     val source: String,
     val key: String,
-    val where: WhereClause? = null,
+    val where: JsonObject? = null,
     val default: JsonElement? = null
-)
-
-/**
- * Defines a where clause for filtering data sources.
- */
-@Serializable
-data class WhereClause(
-    val historyType: String? = null,
-    val id: String? = null
 )
 
 /**
@@ -118,9 +110,10 @@ fun VegasManifest.extractSourcesAndKeys(): Map<String, Set<SourceKeyInfo>> {
         val source = rule.lhs.source
         val key = rule.lhs.key
         val keyType = inferKeyType(rule.operator, rule.rhs)
+        val wherePropertyNames = rule.lhs.where?.keys?.toList() ?: emptyList()
         
         result.getOrPut(source) { mutableSetOf() }
-            .add(SourceKeyInfo(key, keyType, rule.lhs.where != null))
+            .add(SourceKeyInfo(key, keyType, rule.lhs.where != null, wherePropertyNames))
     }
     
     commonRules.forEach { processRule(it) }
@@ -133,11 +126,15 @@ fun VegasManifest.extractSourcesAndKeys(): Map<String, Set<SourceKeyInfo>> {
 
 /**
  * Information about a source key extracted from rules.
+ *
+ * @param wherePropertyNames The JSON key names from the where clause (e.g., ["survey-name", "step-name"]).
+ *   These are used to generate data class properties with camelCase names.
  */
 data class SourceKeyInfo(
     val name: String,
     val type: KeyType,
-    val hasWhereClause: Boolean
+    val hasWhereClause: Boolean,
+    val wherePropertyNames: List<String> = emptyList()
 )
 
 /**
