@@ -5,6 +5,7 @@ import com.example.compose.rally.generated.GeneratedVegasDataSource
 import com.example.compose.rally.generated.PromotionHistoryKeys
 import com.example.compose.rally.generated.SurveyHistoryKeys
 import com.example.compose.rally.generated.UserKeys
+import com.fitnow.vegas.core.Creative
 import com.fitnow.vegas.core.Promotion
 import com.fitnow.vegas.core.PromotionGroup
 import com.fitnow.vegas.core.QueryDataSource
@@ -14,6 +15,17 @@ class AppVegasDataSource(
     private val config: Configuration = Configuration()
 ) : GeneratedVegasDataSource {
 
+    override fun <D : QueryDataSource> customPromotionRules(
+        group: PromotionGroup<D>,
+        promotion: Promotion<D>
+    ): Boolean {
+        return config.getBoolean("kill-switch-${group.id}-${promotion.id}") != true
+    }
+
+    override fun isValid(creative: Creative): Boolean {
+        return config.getBoolean("kill-switch-${creative.id}") != true
+    }
+
     override fun fetchSurveyHistoryInt(key: SurveyHistoryKeys.SurveyHistoryIntSourceKey): Int? {
         return when (key) {
             is SurveyHistoryKeys.SurveyHistoryIntSourceKey.DaysSinceLastShown -> {
@@ -21,13 +33,6 @@ class AppVegasDataSource(
                 3
             }
         }
-    }
-
-    override fun <D : QueryDataSource> appRules(
-        group: PromotionGroup<D>,
-        promotion: Promotion<D>
-    ): Boolean {
-        return LocalDate.now() != LocalDate.of(2024, 10, 31) || group.id == "halloween"
     }
 
     override fun fetchUserStringSet(key: UserKeys.UserStringSetSourceKey): Set<String>? {

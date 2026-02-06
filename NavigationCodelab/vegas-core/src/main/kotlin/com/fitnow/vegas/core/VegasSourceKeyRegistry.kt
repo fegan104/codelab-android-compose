@@ -17,10 +17,10 @@
 package com.fitnow.vegas.core
 
 /**
- * Registry for looking up SourceKeys by their source and key names.
+ * Registry for looking up [SourceKey]s by their source and key names.
  * Used during JSON parsing to resolve string-based key references to typed SourceKey instances.
  *
- * @param D The specific VegasQueryDataSource implementation this registry is bound to.
+ * @param D The specific [QueryDataSource] implementation this registry is bound to.
  */
 interface VegasSourceKeyRegistry<D : QueryDataSource> {
     /**

@@ -41,8 +41,8 @@ internal class VegasRuleParser<D : QueryDataSource>(
             ?: throw IllegalArgumentException("Rule missing 'key' field")
         val operatorName = ruleJson["operator"]?.jsonPrimitive?.content
             ?: throw IllegalArgumentException("Rule missing 'operator' field")
-        val valueElement =
-            ruleJson["rhs"] ?: throw IllegalArgumentException("Rule missing 'rhs' field")
+        val valueElement = ruleJson["rhs"]
+            ?: throw IllegalArgumentException("Rule missing 'rhs' field")
         val defaultElement = lhsObject["default"] ?: ruleJson["default"]
         val whereObject = lhsObject["where"]?.jsonObject
 

@@ -34,7 +34,7 @@ fun <D : QueryDataSource> findPromotion(
     // Return the first promotion where all rules pass
     for (promotion in promoGroup.promotions) {
         val promotionRulesPassed = promotion.rules.all { rule ->
-            dataSource.appRules(promoGroup, promotion) && rule.evaluate(dataSource)
+            dataSource.customPromotionRules(promoGroup, promotion) && rule.evaluate(dataSource)
         }
 
         if (promotionRulesPassed) {

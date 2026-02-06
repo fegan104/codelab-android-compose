@@ -9,7 +9,7 @@ import org.gradle.api.provider.Property
  * Usage in build.gradle:
  * ```
  * vegas {
- *     promotionsDirectory = file("src/main/resources/vegas")
+ *     promotionsDirectory = file("src/main/assets/promotions")
  *     packageName = "com.example.app.generated"
  * }
  * ```
