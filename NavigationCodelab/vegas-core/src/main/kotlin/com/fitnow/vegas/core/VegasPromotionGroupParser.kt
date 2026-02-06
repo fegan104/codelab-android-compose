@@ -1,9 +1,6 @@
 package com.fitnow.vegas.core
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
 
 /**
  * Parser for Vegas promotion groups from JSON format.
@@ -51,7 +48,7 @@ class VegasPromotionGroupParser<D : QueryDataSource>(
         PromotionGroup(
             id = jsonObject.id,
             type = jsonObject.type,
-            commonRules = ruleParser.parseRulesArray(jsonObject.commonRules),
+            commonRules = ruleParser.parseRules(jsonObject.commonRules),
             promotions = jsonObject.promotions.map { it.toDomain() }
         )
     }
@@ -59,7 +56,7 @@ class VegasPromotionGroupParser<D : QueryDataSource>(
     private fun PromotionJson.toDomain(): Promotion<D> = Promotion(
         id = id,
         actionUrl = actionUrl,
-        rules = ruleParser.parseRulesArray(rules),
+        rules = ruleParser.parseRules(rules),
         creativeTreatments = creativeTreatments
     )
 }

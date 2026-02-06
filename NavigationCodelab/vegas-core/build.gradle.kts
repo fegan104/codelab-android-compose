@@ -4,6 +4,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     id("org.jetbrains.kotlin.jvm")
     id("org.jetbrains.kotlin.plugin.serialization")
+    id("maven-publish")
 }
 
 java {
@@ -24,4 +25,28 @@ tasks.withType<KotlinCompile>().configureEach {
 
 dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "com.fitnow"
+            artifactId = "vegas-core"
+            version = "0.0.1"
+            afterEvaluate {
+                from(components["java"])
+            }
+        }
+    }
+    repositories {
+        mavenLocal()
+        maven {
+            name = "GithubPackages"
+            url = uri("https://maven.pkg.github.com/fitnowinc/foundation-android")
+            credentials {
+                username = "fitnowbot"
+                password = System.getenv("ORG_GITHUB_TOKEN")
+            }
+        }
+    }
 }

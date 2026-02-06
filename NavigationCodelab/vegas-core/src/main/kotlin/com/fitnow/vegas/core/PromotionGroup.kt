@@ -2,7 +2,12 @@ package com.fitnow.vegas.core
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+
+//interface PromotionGroupId {
+//    val raw: String
+//}
 
 /**
  * Represents a promotion group containing common rules and a list of promotions.
@@ -57,10 +62,10 @@ data class Creative(
  * JSON schema representation for promotion groups.
  */
 @Serializable
-internal data class PromotionGroupJson(
+data class PromotionGroupJson(
     val id: String,
     val type: String,
-    @SerialName("commonRulesV2") val commonRules: JsonArray = JsonArray(emptyList()),
+    @SerialName("commonRulesV2") val commonRules: List<RuleJson> = emptyList(),
     val promotions: List<PromotionJson> = emptyList()
 )
 
@@ -69,11 +74,32 @@ internal data class PromotionGroupJson(
  * Used for automatic deserialization before transforming to the typed domain object.
  */
 @Serializable
-internal data class PromotionJson(
+data class PromotionJson(
     val id: String,
     val actionUrl: String? = null,
-    @SerialName("rulesV2") val rules: JsonArray = JsonArray(emptyList()),
+    @SerialName("rulesV2") val rules: List<RuleJson> = emptyList(),
     val creativeTreatments: List<Creative> = emptyList()
+)
+
+/**
+ * JSON schema representation for a rule that evaluates a condition.
+ */
+@Serializable
+data class RuleJson(
+    val operator: String,
+    val lhs: LhsDefinitionJson,
+    val rhs: JsonElement
+)
+
+/**
+ * JSON schema representation for the left-hand side of a rule (the data source reference).
+ */
+@Serializable
+data class LhsDefinitionJson(
+    val source: String,
+    val key: String,
+    val where: JsonObject? = null,
+    val default: JsonElement? = null
 )
 
 /**

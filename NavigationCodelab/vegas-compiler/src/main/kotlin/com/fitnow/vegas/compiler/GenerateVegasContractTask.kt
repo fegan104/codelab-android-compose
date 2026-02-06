@@ -1,5 +1,6 @@
 package com.fitnow.vegas.compiler
 
+import com.fitnow.vegas.core.PromotionGroupJson
 import kotlinx.serialization.json.Json
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty

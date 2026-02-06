@@ -1,12 +1,9 @@
 package com.fitnow.vegas.core
 
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
@@ -20,31 +17,26 @@ internal class VegasRuleParser<D : QueryDataSource>(
     val registry: VegasSourceKeyRegistry<D>
 ) {
     /**
-     * Parses a JsonArray of rules into a list of Rule objects.
+     * Parses a list of RuleJson objects into a list of typed Rule objects.
      * Exposed for use by VegasPromotionGroupParser.
      *
-     * @param rulesArray The JSON array containing rule definitions
+     * @param rules The list of RuleJson objects to parse
      * @return List of parsed Rules (rules with unknown keys are skipped)
      */
-    internal fun parseRulesArray(rulesArray: JsonArray): List<Rule<D, *, *>> {
-        return rulesArray.mapNotNull { ruleElement ->
-            parseRule(ruleElement.jsonObject)
+    internal fun parseRules(rules: List<RuleJson>): List<Rule<D, *, *>> {
+        return rules.mapNotNull { ruleJson ->
+            parseRule(ruleJson)
         }
     }
 
-    private fun parseRule(ruleJson: JsonObject): Rule<D, *, *>? {
-        val lhsObject = ruleJson["lhs"]?.jsonObject
-            ?: throw IllegalArgumentException("Rule missing 'lhs' field")
-        val sourceName = lhsObject["source"]?.jsonPrimitive?.content
-            ?: throw IllegalArgumentException("Rule missing 'source' field")
-        val keyName = lhsObject["key"]?.jsonPrimitive?.content
-            ?: throw IllegalArgumentException("Rule missing 'key' field")
-        val operatorName = ruleJson["operator"]?.jsonPrimitive?.content
-            ?: throw IllegalArgumentException("Rule missing 'operator' field")
-        val valueElement = ruleJson["rhs"]
-            ?: throw IllegalArgumentException("Rule missing 'rhs' field")
-        val defaultElement = lhsObject["default"] ?: ruleJson["default"]
-        val whereObject = lhsObject["where"]?.jsonObject
+    private fun parseRule(ruleJson: RuleJson): Rule<D, *, *>? {
+        val lhs = ruleJson.lhs
+        val sourceName = lhs.source
+        val keyName = lhs.key
+        val operatorName = ruleJson.operator
+        val valueElement = ruleJson.rhs
+        val defaultElement = lhs.default
+        val whereObject = lhs.where
 
         // Look up the key from the registry - use createKeyWithWhere if where clause exists
         val sourceKey = if (whereObject != null) {

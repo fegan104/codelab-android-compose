@@ -15,13 +15,17 @@
  */
 
 pluginManagement {
+    repositories {
+        mavenLocal()
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
     // Include vegas-compiler as a plugin build so its Gradle plugin is discoverable
     includeBuild("vegas-compiler")
 }
 
-// Include vegas-core as a regular module
-include(":vegas-core")
-
 include(":app")
+include(":vegas-core")
 include(":vegas-ui")
 rootProject.name = "Rally"

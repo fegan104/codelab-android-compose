@@ -34,6 +34,14 @@ plugins {
     id("com.diffplug.spotless") version "8.1.0"
 }
 
+allprojects {
+    repositories {
+        mavenLocal()
+        google()
+        mavenCentral()
+    }
+}
+
 subprojects {
     repositories {
         google()

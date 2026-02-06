@@ -12,6 +12,7 @@ java {
 }
 
 repositories {
+    mavenLocal()
     google()
     mavenCentral()
 }
@@ -33,6 +34,7 @@ gradlePlugin {
 
 dependencies {
     implementation(gradleApi())
+    implementation("com.fitnow:vegas-core:0.0.1")
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("com.squareup:kotlinpoet:2.0.0")
