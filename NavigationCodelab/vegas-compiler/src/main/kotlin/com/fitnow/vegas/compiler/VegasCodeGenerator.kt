@@ -20,7 +20,7 @@ import com.squareup.kotlinpoet.asTypeName
  * - Sealed key classes with type-safe resolve implementations
  * - GeneratedVegasSourceKeyRegistry for string-to-key lookups
  */
-class VegasCodeGenerator(
+class VegasCodeGenerator internal constructor(
     private val sourcesAndKeys: Map<String, Set<SourceKeyInfo>>,
     private val packageName: String = "com.fitnow.vegas.generated"
 ) {

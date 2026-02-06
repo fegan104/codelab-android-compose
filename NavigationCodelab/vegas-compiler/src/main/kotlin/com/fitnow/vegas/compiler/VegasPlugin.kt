@@ -44,7 +44,7 @@ class VegasPlugin : Plugin<Project> {
         // Register the generation task
         val generateTask = project.tasks.register(
             "generateVegasApi",
-            VegasGenerateTask::class.java
+            GenerateVegasContractTask::class.java
         ) { task ->
             task.description = "Generates type-safe Vegas API from JSON manifests"
             task.group = "vegas"

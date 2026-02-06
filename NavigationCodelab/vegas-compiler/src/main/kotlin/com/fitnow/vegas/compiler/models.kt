@@ -10,23 +10,23 @@ import kotlinx.serialization.json.JsonObject
  * Represents a promotion group configuration.
  */
 @Serializable
-data class VegasManifest(
+internal data class PromotionGroupJson(
     val id: String,
     val type: String,
     @SerialName("commonRulesV2")
-    val commonRules: List<RuleDefinition> = emptyList(),
-    val promotions: List<PromotionDefinition> = emptyList()
+    val commonRules: List<Rule> = emptyList(),
+    val promotions: List<PromotionJson> = emptyList()
 )
 
 /**
  * Defines a single promotion within the manifest.
  */
 @Serializable
-data class PromotionDefinition(
+internal data class PromotionJson(
     val id: String,
     val actionUrl: String? = null,
     @SerialName("rulesV2")
-    val rules: List<RuleDefinition> = emptyList(),
+    val rules: List<Rule> = emptyList(),
     val creativeTreatments: List<CreativeTreatment> = emptyList()
 )
 
@@ -34,12 +34,7 @@ data class PromotionDefinition(
  * Defines a rule that evaluates a condition.
  */
 @Serializable
-data class RuleDefinition(
-    val comment: String? = null,
-    @SerialName("_comment_")
-    val commentAlt: String? = null,
-    @SerialName("_comment1")
-    val comment1: String? = null,
+internal data class Rule(
     val operator: String,
     val lhs: LhsDefinition,
     val rhs: JsonElement
@@ -49,7 +44,7 @@ data class RuleDefinition(
  * Defines the left-hand side of a rule (the data source reference).
  */
 @Serializable
-data class LhsDefinition(
+internal data class LhsDefinition(
     val source: String,
     val key: String,
     val where: JsonObject? = null,
@@ -60,7 +55,7 @@ data class LhsDefinition(
  * Defines a creative treatment for a promotion.
  */
 @Serializable
-data class CreativeTreatment(
+internal data class CreativeTreatment(
     val id: String,
     val heroImageUrl: String? = null,
     val titleText: String? = null,
@@ -68,23 +63,14 @@ data class CreativeTreatment(
     val actionText: String? = null,
     val buttonText: String? = null,
     val noThanksText: String? = null,
-    val messaging: MessagingConfig? = null,
     val weight: Int = 1
-)
-
-/**
- * Defines messaging configuration for a creative treatment.
- */
-@Serializable
-data class MessagingConfig(
-    val takeoverId: String? = null
 )
 
 /**
  * Supported key types for code generation.
  */
 @Serializable
-enum class KeyType {
+internal enum class KeyType {
     @SerialName("Int")
     INT,
     @SerialName("String")
@@ -103,13 +89,13 @@ enum class KeyType {
  * Extracts all unique sources and their keys from the manifest.
  * Used for code generation.
  */
-fun VegasManifest.extractSourcesAndKeys(): Map<String, Set<SourceKeyInfo>> {
+internal fun PromotionGroupJson.extractSourcesAndKeys(): Map<String, Set<SourceKeyInfo>> {
     val result = mutableMapOf<String, MutableSet<SourceKeyInfo>>()
     
-    fun processRule(rule: RuleDefinition) {
+    fun processRule(rule: Rule) {
         val source = rule.lhs.source
         val key = rule.lhs.key
-        val keyType = inferKeyType(rule.operator, rule.rhs)
+        val keyType = inferKeyType(rule.operator)
         val wherePropertyNames = rule.lhs.where?.keys?.toList() ?: emptyList()
         
         result.getOrPut(source) { mutableSetOf() }
@@ -130,7 +116,7 @@ fun VegasManifest.extractSourcesAndKeys(): Map<String, Set<SourceKeyInfo>> {
  * @param wherePropertyNames The JSON key names from the where clause (e.g., ["survey-name", "step-name"]).
  *   These are used to generate data class properties with camelCase names.
  */
-data class SourceKeyInfo(
+internal data class SourceKeyInfo(
     val name: String,
     val type: KeyType,
     val hasWhereClause: Boolean,
@@ -140,10 +126,10 @@ data class SourceKeyInfo(
 /**
  * Infers the key type from the operator and rhs value.
  */
-private fun inferKeyType(operator: String, rhs: JsonElement): KeyType {
+private fun inferKeyType(operator: String): KeyType {
     return when {
-        operator == "stringSetAnyMatch" -> KeyType.STRING_SET
         operator == "bool" -> KeyType.BOOLEAN
+        operator.startsWith("stringSet") -> KeyType.STRING_SET
         operator.startsWith("int") -> KeyType.INT
         operator.startsWith("long") -> KeyType.LONG
         operator.startsWith("double") -> KeyType.DOUBLE

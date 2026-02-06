@@ -3,7 +3,6 @@ package com.fitnow.vegas.compiler
 import kotlinx.serialization.json.Json
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
-import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.CacheableTask
 import org.gradle.api.tasks.Input
@@ -17,7 +16,7 @@ import org.gradle.api.tasks.TaskAction
  * Gradle task that generates type-safe Kotlin code from a Vegas JSON manifest.
  */
 @CacheableTask
-abstract class VegasGenerateTask : DefaultTask() {
+abstract class GenerateVegasContractTask : DefaultTask() {
 
     /**
      * The input directory containing JSON manifest files.
@@ -52,7 +51,7 @@ abstract class VegasGenerateTask : DefaultTask() {
 
         jsonFiles.forEach { file ->
             val content = file.readText()
-            val manifest = json.decodeFromString<VegasManifest>(content)
+            val manifest = json.decodeFromString<PromotionGroupJson>(content)
             val fileSources = manifest.extractSourcesAndKeys()
 
             fileSources.forEach { (source, keys) ->
@@ -69,8 +68,6 @@ abstract class VegasGenerateTask : DefaultTask() {
         // Use KotlinPoet's FileSpec to write the generated code
         val fileSpec = generator.generateFileSpec()
         val outputDirectory = outputDir.get().asFile
-
-        // KotlinPoet handles package directory structure automatically
         fileSpec.writeTo(outputDirectory)
 
         val totalKeys = aggregatedSourcesAndKeys.values.sumOf { it.size }
