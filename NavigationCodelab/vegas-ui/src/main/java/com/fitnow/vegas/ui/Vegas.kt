@@ -1,14 +1,16 @@
 package com.fitnow.vegas.ui
 
 import android.content.Context
-import com.fitnow.vegas.core.Promotion
+import android.util.Log
 import com.fitnow.vegas.core.PromotionGroup
 import com.fitnow.vegas.core.QueryDataSource
 import com.fitnow.vegas.core.VegasPromotionGroupParser
 import com.fitnow.vegas.core.VegasSourceKeyRegistry
 import com.fitnow.vegas.core.findPromotion
+import com.fitnow.vegas.core.weightedRandom
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.onStart
 
 class Vegas<D : QueryDataSource> private constructor(
@@ -16,10 +18,22 @@ class Vegas<D : QueryDataSource> private constructor(
     private val promotionGroup: PromotionGroup<D>,
 ) {
 
-    private val _currentPromotion = MutableStateFlow<Promotion<D>?>(null)
+    private val _currentPromotion = MutableStateFlow<VegasResponse<D>?>(null)
 
-    val currentPromotion: Flow<Promotion<D>?> = _currentPromotion.onStart {
-        _currentPromotion.value = findPromotion(promotionGroup, dataSource)
+    val currentPromotion: Flow<VegasResponse<D>?> = _currentPromotion.onStart {
+        _currentPromotion.value = findPromotion(promotionGroup, dataSource)?.let { promotion ->
+            VegasResponse(
+                group = promotionGroup,
+                promotion = promotion,
+                creative = promotion
+                    .creativeTreatments
+                    .filter { dataSource.isValid(it) }
+                    .weightedRandom(),
+            )
+        }
+    }.catch { reason ->
+        Log.e("Vegas", "Error evaluating promotions", reason)
+        emit(null)
     }
 
     internal fun onDismiss() {
@@ -33,7 +47,7 @@ class Vegas<D : QueryDataSource> private constructor(
 
         //TODO use PromoGroupId not file name
         fun buildFromAssets(context: Context, fileName: String): Result<Vegas<D>> {
-            val rawJson = context.assets.open(fileName).bufferedReader().use { it.readText() }
+            val rawJson = context.assets.open("$fileName.json").bufferedReader().use { it.readText() }
             return build(rawJson)
         }
 

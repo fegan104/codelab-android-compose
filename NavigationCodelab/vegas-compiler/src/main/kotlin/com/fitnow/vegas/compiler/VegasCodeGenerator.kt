@@ -22,6 +22,7 @@ import com.squareup.kotlinpoet.asTypeName
  */
 class VegasCodeGenerator internal constructor(
     private val sourcesAndKeys: Map<String, Set<SourceKeyInfo>>,
+    private val promotionGroupIds: Set<String> = emptySet(),
     private val packageName: String = "com.fitnow.vegas.generated"
 ) {
 
@@ -39,6 +40,11 @@ class VegasCodeGenerator internal constructor(
     fun generateFileSpec(): FileSpec {
         return FileSpec.builder(packageName, "VegasGeneratedApi")
             .apply {
+                // Add PromotionGroupId sealed interface
+                if (promotionGroupIds.isNotEmpty()) {
+                    addType(generatePromotionGroupId())
+                }
+
                 // Add QuerySource objects
                 sourcesAndKeys.keys.forEach { sourceName ->
                     addType(generateQuerySource(sourceName))
@@ -54,6 +60,40 @@ class VegasCodeGenerator internal constructor(
 
                 // Add registry
                 addType(generateRegistry())
+            }
+            .build()
+    }
+
+    /**
+     * Generates the PromotionGroupId sealed interface with a data object for each unique promotion group ID.
+     */
+    private fun generatePromotionGroupId(): TypeSpec {
+        return TypeSpec.interfaceBuilder("PromotionGroupId")
+            .addKdoc("Sealed interface representing known promotion group IDs.")
+            .addModifiers(KModifier.SEALED)
+            .addProperty(
+                PropertySpec.builder("raw", String::class)
+                    .addKdoc("The raw promotion group ID as it appears in the JSON manifest.")
+                    .build()
+            )
+            .apply {
+                promotionGroupIds.forEach { id ->
+                    val className = id.toPascalCase()
+                    addType(
+                        TypeSpec.objectBuilder(className)
+                            .addKdoc("Promotion group ID for %S.", id)
+                            .addModifiers(KModifier.DATA)
+                            .addSuperinterface(ClassName(packageName, "PromotionGroupId"))
+                            .addProperty(
+                                PropertySpec.builder("raw", String::class)
+                                    .addKdoc("The raw promotion group ID as it appears in the JSON manifest.")
+                                    .addModifiers(KModifier.OVERRIDE)
+                                    .initializer("%S", id)
+                                    .build()
+                            )
+                            .build()
+                    )
+                }
             }
             .build()
     }

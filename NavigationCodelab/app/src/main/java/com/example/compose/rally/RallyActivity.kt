@@ -53,7 +53,7 @@ class RallyActivity : ComponentActivity() {
                 promotion?.let { promo ->
                     PromotionCreative(
                         vegas = viewModel.vegas,
-                        creative = promo.creativeTreatments.weightedRandom(),
+                        creative = promo.creative,
                         modifier = Modifier.padding(horizontal = 16.dp),
                     )
                 }

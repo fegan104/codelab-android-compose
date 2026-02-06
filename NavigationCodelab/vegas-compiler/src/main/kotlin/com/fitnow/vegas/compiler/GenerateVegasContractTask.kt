@@ -48,11 +48,13 @@ abstract class GenerateVegasContractTask : DefaultTask() {
         val jsonFiles = directory.listFiles { file -> file.extension == "json" } ?: emptyArray()
 
         val aggregatedSourcesAndKeys = mutableMapOf<String, MutableSet<SourceKeyInfo>>()
+        val promotionGroupIds = mutableSetOf<String>()
 
         jsonFiles.forEach { file ->
             val content = file.readText()
-            val manifest = json.decodeFromString<PromotionGroupJson>(content)
-            val fileSources = manifest.extractSourcesAndKeys()
+            val promoGroup = json.decodeFromString<PromotionGroupJson>(content)
+            promotionGroupIds.add(promoGroup.id)
+            val fileSources = promoGroup.extractSourcesAndKeys()
 
             fileSources.forEach { (source, keys) ->
                 aggregatedSourcesAndKeys.getOrPut(source) { mutableSetOf() }
@@ -62,6 +64,7 @@ abstract class GenerateVegasContractTask : DefaultTask() {
 
         val generator = VegasCodeGenerator(
             sourcesAndKeys = aggregatedSourcesAndKeys,
+            promotionGroupIds = promotionGroupIds,
             packageName = packageName.get()
         )
 
