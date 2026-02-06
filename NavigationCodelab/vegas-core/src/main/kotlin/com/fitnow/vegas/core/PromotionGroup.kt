@@ -87,7 +87,7 @@ data class PromotionJson(
 @Serializable
 data class RuleJson(
     val operator: String,
-    val lhs: LhsDefinitionJson,
+    val lhs: RuleQueryJson,
     val rhs: JsonElement
 )
 
@@ -95,7 +95,7 @@ data class RuleJson(
  * JSON schema representation for the left-hand side of a rule (the data source reference).
  */
 @Serializable
-data class LhsDefinitionJson(
+data class RuleQueryJson(
     val source: String,
     val key: String,
     val where: JsonObject? = null,
