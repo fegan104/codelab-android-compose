@@ -65,17 +65,17 @@ class VegasCodeGenerator internal constructor(
     }
 
     /**
-     * Generates the PromotionGroupId sealed interface with a data object for each unique promotion group ID.
+     * Generates the PromotionGroupIds sealed interface that extends the core PromotionGroupId,
+     * with a data object for each unique promotion group ID.
      */
     private fun generatePromotionGroupId(): TypeSpec {
-        return TypeSpec.interfaceBuilder("PromotionGroupId")
+        val corePromotionGroupIdType = ClassName(vegasCorePackage, "PromotionGroupId")
+        val generatedPromotionGroupIdsType = ClassName(packageName, "PromotionGroupIds")
+
+        return TypeSpec.interfaceBuilder("PromotionGroupIds")
             .addKdoc("Sealed interface representing known promotion group IDs.")
             .addModifiers(KModifier.SEALED)
-            .addProperty(
-                PropertySpec.builder("raw", String::class)
-                    .addKdoc("The raw promotion group ID as it appears in the JSON manifest.")
-                    .build()
-            )
+            .addSuperinterface(corePromotionGroupIdType)
             .apply {
                 promotionGroupIds.forEach { id ->
                     val className = id.toPascalCase()
@@ -83,7 +83,7 @@ class VegasCodeGenerator internal constructor(
                         TypeSpec.objectBuilder(className)
                             .addKdoc("Promotion group ID for %S.", id)
                             .addModifiers(KModifier.DATA)
-                            .addSuperinterface(ClassName(packageName, "PromotionGroupId"))
+                            .addSuperinterface(generatedPromotionGroupIdsType)
                             .addProperty(
                                 PropertySpec.builder("raw", String::class)
                                     .addKdoc("The raw promotion group ID as it appears in the JSON manifest.")

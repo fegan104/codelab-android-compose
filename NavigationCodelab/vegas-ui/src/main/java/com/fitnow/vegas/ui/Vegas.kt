@@ -3,6 +3,7 @@ package com.fitnow.vegas.ui
 import android.content.Context
 import android.util.Log
 import com.fitnow.vegas.core.PromotionGroup
+import com.fitnow.vegas.core.PromotionGroupId
 import com.fitnow.vegas.core.QueryDataSource
 import com.fitnow.vegas.core.VegasPromotionGroupParser
 import com.fitnow.vegas.core.VegasSourceKeyRegistry
@@ -46,8 +47,8 @@ class Vegas<D : QueryDataSource> private constructor(
     ) {
 
         //TODO use PromoGroupId not file name
-        fun buildFromAssets(context: Context, fileName: String): Result<Vegas<D>> {
-            val rawJson = context.assets.open("$fileName.json").bufferedReader().use { it.readText() }
+        fun buildFromAssets(context: Context, promotionGroupId: PromotionGroupId): Result<Vegas<D>> {
+            val rawJson = context.assets.open("${promotionGroupId.raw}.json").bufferedReader().use { it.readText() }
             return build(rawJson)
         }
 

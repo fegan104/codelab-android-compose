@@ -46,7 +46,7 @@ class VegasPromotionGroupParser<D : QueryDataSource>(
 
         // Transform json object to domain object, parsing rules manually
         PromotionGroup(
-            id = jsonObject.id,
+            id = ParsedPromotionGroupId(jsonObject.id),
             type = jsonObject.type,
             commonRules = ruleParser.parseRules(jsonObject.commonRules),
             promotions = jsonObject.promotions.map { it.toDomain() }
@@ -60,3 +60,8 @@ class VegasPromotionGroupParser<D : QueryDataSource>(
         creativeTreatments = creativeTreatments
     )
 }
+
+/**
+ * Simple [PromotionGroupId] wrapper for IDs parsed directly from JSON.
+ */
+private data class ParsedPromotionGroupId(override val raw: String) : PromotionGroupId

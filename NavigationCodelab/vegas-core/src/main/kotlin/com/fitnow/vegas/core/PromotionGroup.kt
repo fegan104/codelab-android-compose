@@ -5,9 +5,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
-//interface PromotionGroupId {
-//    val raw: String
-//}
+interface PromotionGroupId {
+    val raw: String
+}
 
 /**
  * Represents a promotion group containing common rules and a list of promotions.
@@ -20,7 +20,7 @@ import kotlinx.serialization.json.JsonObject
  * @property promotions List of promotions to evaluate in priority order (first match wins)
  */
 data class PromotionGroup<D : QueryDataSource>(
-    val id: String,
+    val id: PromotionGroupId,
     val type: String,
     val commonRules: List<Rule<D, *, *>>,
     val promotions: List<Promotion<D>>

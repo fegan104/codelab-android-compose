@@ -30,7 +30,7 @@ class AppVegasDataSource(
         return when (key) {
             is SurveyHistoryKeys.SurveyHistoryIntSourceKey.DaysSinceLastShown -> {
                 key.surveyName
-                3
+                9999
             }
         }
     }
