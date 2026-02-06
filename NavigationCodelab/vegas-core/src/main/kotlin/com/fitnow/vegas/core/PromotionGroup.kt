@@ -20,7 +20,7 @@ interface PromotionGroupId {
  * @property promotions List of promotions to evaluate in priority order (first match wins)
  */
 data class PromotionGroup<D : QueryDataSource>(
-    val id: PromotionGroupId,
+    val id: String,
     val type: String,
     val commonRules: List<Rule<D, *, *>>,
     val promotions: List<Promotion<D>>
