@@ -13,7 +13,7 @@ import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskAction
 
 /**
- * Gradle task that generates type-safe Kotlin code from a Vegas JSON manifest.
+ * Gradle task that generates type-safe Kotlin code from a promotion group JSON.
  */
 @CacheableTask
 abstract class GenerateVegasContractTask : DefaultTask() {
