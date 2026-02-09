@@ -22,7 +22,7 @@ class Vegas<D : QueryDataSource> private constructor(
     private val _currentPromotion = MutableStateFlow<VegasResponse<D>?>(null)
 
     val currentPromotion: Flow<VegasResponse<D>?> = _currentPromotion.onStart {
-        _currentPromotion.value = findPromotion(promotionGroup, dataSource)?.let { promotion ->
+        val response = findPromotion(promotionGroup, dataSource)?.let { promotion ->
             VegasResponse(
                 group = promotionGroup,
                 promotion = promotion,
@@ -32,6 +32,8 @@ class Vegas<D : QueryDataSource> private constructor(
                     .weightedRandom(),
             )
         }
+
+        _currentPromotion.value = response
     }.catch { reason ->
         Log.e("Vegas", "Error evaluating promotions", reason)
         emit(null)
@@ -46,7 +48,6 @@ class Vegas<D : QueryDataSource> private constructor(
         private val keyRegistry: VegasSourceKeyRegistry<D>
     ) {
 
-        //TODO use PromoGroupId not file name
         fun buildFromAssets(context: Context, promotionGroupId: PromotionGroupId): Result<Vegas<D>> {
             val rawJson = context.assets.open("${promotionGroupId.raw}.json").bufferedReader().use { it.readText() }
             return build(rawJson)

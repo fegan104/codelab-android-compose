@@ -23,13 +23,13 @@ internal class VegasRuleParser<D : QueryDataSource>(
      * @param rules The list of RuleJson objects to parse
      * @return List of parsed Rules (rules with unknown keys are skipped)
      */
-    internal fun parseRules(rules: List<RuleJson>): List<Rule<D, *, *>> {
+    internal fun parseRules(rules: List<RuleJson>): List<Rule<D, *>> {
         return rules.mapNotNull { ruleJson ->
             parseRule(ruleJson)
         }
     }
 
-    private fun parseRule(ruleJson: RuleJson): Rule<D, *, *>? {
+    private fun parseRule(ruleJson: RuleJson): Rule<D, *>? {
         val lhs = ruleJson.lhs
         val sourceName = lhs.source
         val keyName = lhs.key
@@ -48,8 +48,6 @@ internal class VegasRuleParser<D : QueryDataSource>(
             registry.findKey(sourceName, keyName)
         } ?: return null // Key not found, skip this rule
 
-        val source = resolveSource(sourceName)
-
         // Determine the type and create the appropriate rule
         return when (sourceKey) {
             is IntSourceKey -> createIntRule(
@@ -57,7 +55,6 @@ internal class VegasRuleParser<D : QueryDataSource>(
                 operatorName,
                 valueElement,
                 defaultElement,
-                source
             )
 
             is StringSourceKey -> createStringRule(
@@ -65,7 +62,6 @@ internal class VegasRuleParser<D : QueryDataSource>(
                 operatorName,
                 valueElement,
                 defaultElement,
-                source
             )
 
             is BooleanSourceKey -> createBooleanRule(
@@ -73,7 +69,6 @@ internal class VegasRuleParser<D : QueryDataSource>(
                 operatorName,
                 valueElement,
                 defaultElement,
-                source
             )
 
             is StringSetSourceKey -> createStringSetRule(
@@ -81,7 +76,6 @@ internal class VegasRuleParser<D : QueryDataSource>(
                 operatorName,
                 valueElement,
                 defaultElement,
-                source
             )
         }
     }
@@ -91,8 +85,7 @@ internal class VegasRuleParser<D : QueryDataSource>(
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
-        source: QuerySource
-    ): Rule<D, QuerySource, Int> {
+    ): Rule<D, Int> {
         val operator = parseIntOperator(operatorName)
         val value = valueElement.jsonPrimitive.intOrNull
             ?: throw IllegalArgumentException("Expected integer value for int rule")
@@ -101,7 +94,7 @@ internal class VegasRuleParser<D : QueryDataSource>(
         return Rule(
             operator = operator,
             rhs = value,
-            lhs = RuleQuery(source, key, default)
+            lhs = RuleQuery(key, default)
         )
     }
 
@@ -110,8 +103,7 @@ internal class VegasRuleParser<D : QueryDataSource>(
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
-        source: QuerySource
-    ): Rule<D, QuerySource, String> {
+    ): Rule<D, String> {
         val operator = parseStringOperator(operatorName)
         val value = valueElement.jsonPrimitive.content
         val default = defaultElement?.jsonPrimitive?.content
@@ -119,7 +111,7 @@ internal class VegasRuleParser<D : QueryDataSource>(
         return Rule(
             operator = operator,
             rhs = value,
-            lhs = RuleQuery(source, key, default)
+            lhs = RuleQuery(key, default)
         )
     }
 
@@ -128,8 +120,7 @@ internal class VegasRuleParser<D : QueryDataSource>(
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
-        source: QuerySource
-    ): Rule<D, QuerySource, Boolean> {
+    ): Rule<D, Boolean> {
         val operator = parseBooleanOperator(operatorName)
         val value = valueElement.jsonPrimitive.booleanOrNull
             ?: throw IllegalArgumentException("Expected boolean value for boolean rule")
@@ -138,7 +129,7 @@ internal class VegasRuleParser<D : QueryDataSource>(
         return Rule(
             operator = operator,
             rhs = value,
-            lhs = RuleQuery(source, key, default)
+            lhs = RuleQuery(key, default)
         )
     }
 
@@ -147,8 +138,7 @@ internal class VegasRuleParser<D : QueryDataSource>(
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
-        source: QuerySource
-    ): Rule<D, QuerySource, Set<String>> {
+    ): Rule<D, Set<String>> {
         val operator = parseStringSetOperator(operatorName)
         val values = valueElement.jsonArray.map { it.jsonPrimitive.content }.toSet()
         val default = defaultElement?.jsonArray?.map { it.jsonPrimitive.content }?.toSet()
@@ -156,7 +146,7 @@ internal class VegasRuleParser<D : QueryDataSource>(
         return Rule(
             operator = operator,
             rhs = values,
-            lhs = RuleQuery(source, key, default)
+            lhs = RuleQuery(key, default)
         )
     }
 
@@ -193,10 +183,5 @@ internal class VegasRuleParser<D : QueryDataSource>(
         "stringSetAnyMatch" -> StringSetAnyMatch
         "stringSetNotAnyMatch" -> StringSetNotAnyMatch
         else -> throw IllegalArgumentException("Unknown string set operator: $name")
-    }
-
-    private fun resolveSource(sourceName: String): QuerySource {
-        return registry.findSource(sourceName)
-            ?: throw IllegalArgumentException("Unknown source: $sourceName")
     }
 }

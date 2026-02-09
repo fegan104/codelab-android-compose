@@ -22,7 +22,7 @@ interface PromotionGroupId {
 data class PromotionGroup<D : QueryDataSource>(
     val id: String,
     val type: String,
-    val commonRules: List<Rule<D, *, *>>,
+    val commonRules: List<Rule<D, *>>,
     val promotions: List<Promotion<D>>
 )
 
@@ -38,7 +38,7 @@ data class PromotionGroup<D : QueryDataSource>(
 data class Promotion<D : QueryDataSource>(
     val id: String,
     val actionUrl: String?,
-    val rules: List<Rule<D, *, *>>,
+    val rules: List<Rule<D, *>>,
     val creativeTreatments: List<Creative>
 )
 

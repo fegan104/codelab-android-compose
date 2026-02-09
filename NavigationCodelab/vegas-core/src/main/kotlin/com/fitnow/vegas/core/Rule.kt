@@ -5,16 +5,15 @@ package com.fitnow.vegas.core
  * The generic parameters ensure type safety without runtime casts.
  *
  * @param D The specific VegasQueryDataSource implementation
- * @param S The specific QuerySource type
  * @param E The type of the equation's values
  * @property operator The operator used to compare values
  * @property rhs The right-hand side value (constant from rule definition)
  * @property lhs The left-hand side query (resolved from data source)
  */
-data class Rule<D : QueryDataSource, S : QuerySource, E>(
+data class Rule<D : QueryDataSource, E>(
     val operator: RuleOperator<E>,
     val rhs: E,
-    val lhs: RuleQuery<D, S, E>
+    val lhs: RuleQuery<D, E>
 ) {
     /**
      * Evaluates this rule against the provided data source.

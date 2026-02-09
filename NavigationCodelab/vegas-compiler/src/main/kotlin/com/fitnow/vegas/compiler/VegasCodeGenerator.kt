@@ -271,8 +271,6 @@ class VegasCodeGenerator internal constructor(
             .parameterizedBy(String::class.asTypeName(), String::class.asTypeName())
         val keyMapType = Map::class.asTypeName()
             .parameterizedBy(pairType, sourceKeyWildcard)
-        val sourceMapType = Map::class.asTypeName()
-            .parameterizedBy(String::class.asTypeName(), querySourceType)
         val whereParamsType = Map::class.asTypeName()
             .parameterizedBy(String::class.asTypeName(), String::class.asTypeName())
 
@@ -283,12 +281,6 @@ class VegasCodeGenerator internal constructor(
                 PropertySpec.builder("keyMap", keyMapType)
                     .addModifiers(KModifier.PRIVATE)
                     .initializer(buildKeyMapInitializer())
-                    .build()
-            )
-            .addProperty(
-                PropertySpec.builder("sourceMap", sourceMapType)
-                    .addModifiers(KModifier.PRIVATE)
-                    .initializer(buildSourceMapInitializer())
                     .build()
             )
             .addFunction(
@@ -309,14 +301,6 @@ class VegasCodeGenerator internal constructor(
                     .addParameter("whereParams", whereParamsType)
                     .returns(sourceKeyWildcard.copy(nullable = true))
                     .addCode(buildCreateKeyWithWhereBody())
-                    .build()
-            )
-            .addFunction(
-                FunSpec.builder("findSource")
-                    .addModifiers(KModifier.OVERRIDE)
-                    .addParameter("sourceName", String::class)
-                    .returns(querySourceType.copy(nullable = true))
-                    .addStatement("return sourceMap[sourceName]")
                     .build()
             )
             .build()

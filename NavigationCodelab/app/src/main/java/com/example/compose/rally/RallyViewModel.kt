@@ -11,7 +11,7 @@ class RallyViewModel(app: Application) : AndroidViewModel(app) {
 
     private val appDataSource = AppVegasDataSource()
     val vegas = Vegas.newBuilder(appDataSource, GeneratedVegasSourceKeyRegistry)
-        .buildFromAssets(app, PromotionGroupIds.PremiumShowcasePromo)
+        .buildFromAssets(app, PromotionGroupIds.DashboardPromo)
         .getOrThrow()
 
     val observePromo = vegas.currentPromotion

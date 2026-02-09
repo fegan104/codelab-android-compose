@@ -58,7 +58,8 @@ abstract class GenerateVegasContractTask : DefaultTask() {
             val fileSources = promoGroup.extractSourcesAndKeys()
 
             fileSources.forEach { (source, keys) ->
-                aggregatedSourcesAndKeys.getOrPut(source) { mutableSetOf() }
+                aggregatedSourcesAndKeys
+                    .getOrPut(source) { mutableSetOf() }
                     .addAll(keys)
             }
         }
