@@ -34,29 +34,42 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.compose.rally.ui.components.RallyTabRow
 import com.example.compose.rally.ui.theme.RallyTheme
-import com.fitnow.vegas.core.weightedRandom
 import com.fitnow.vegas.ui.PromotionCreative
+import com.fitnow.vegas.ui.PromotionCreativeClickListener
+import com.fitnow.vegas.ui.VegasResponse
 
 /**
  * This Activity recreates part of the Rally Material Study from
  * https://material.io/design/material-studies/rally.html
  */
 class RallyActivity : ComponentActivity() {
+
+    private val clickListener = object : PromotionCreativeClickListener {
+        override fun onShown(response: VegasResponse<*>) {
+//            TODO("Not yet implemented")
+        }
+
+        override fun onOpenAction(actionUrl: String?) {
+//            TODO("Not yet implemented")
+        }
+
+        override fun onDismiss() {
+//            TODO("Not yet implemented")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContent {
             val viewModel by viewModels<RallyViewModel>()
-            val promotion by viewModel.observePromo.collectAsState(null)
 
             RallyApp {
-                promotion?.let { promo ->
-                    PromotionCreative(
-                        vegas = viewModel.vegas,
-                        creative = promo.creative,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    )
-                }
+                PromotionCreative(
+                    vegasPromoter = viewModel.dashboardPromoter,
+                    clickListener = clickListener,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
             }
         }
     }

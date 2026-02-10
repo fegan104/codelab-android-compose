@@ -49,10 +49,10 @@ data class Promotion<D : QueryDataSource>(
 @Serializable
 data class Creative(
     val id: String,
-    val heroImageUrl: String? = null,
+    val imageUrl: String? = null,
     val titleText: String? = null,
     val bodyText: String? = null,
-    val actionText: String? = null,
+    val cardTitle: String? = null,
     val buttonText: String? = null,
     val noThanksText: String? = null,
     val weight: Int = 1

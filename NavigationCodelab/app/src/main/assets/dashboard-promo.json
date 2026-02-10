@@ -145,15 +145,11 @@
       "creativeTreatments": [
         {
           "id": "halloweenSalePremiumCauldron",
-          "heroImageUrl": "https://assets.loseit.com/2024/halloween-premium-70off.gif",
+          "cardTitle": "Happy Halloween",
+          "imageUrl": "https://static.vecteezy.com/system/resources/previews/050/551/650/large_2x/halloween-pumpkin-icon-with-a-plus-sign-free-vector.jpg",
           "titleText": "Spooky Savings on Premium!",
           "bodyText": "Boo! Save 70% on Premium this Halloween! Don’t miss the chance to upgrade to the best version of Lose It!.",
-          "actionText": "",
           "buttonText": "Save 70%",
-          "noThanksText": "No thanks",
-          "messaging": {
-            "takeoverId": "black-friday"
-          },
           "weight": 1
         }
       ]
@@ -245,15 +241,11 @@
       "creativeTreatments": [
         {
           "id": "halloweenSalePremiumCauldron",
-          "heroImageUrl": "https://assets.loseit.com/2024/halloween-premium-70off.gif",
+          "cardTitle": "Happy Halloween",
+          "imageUrl": "https://static.vecteezy.com/system/resources/previews/050/551/650/large_2x/halloween-pumpkin-icon-with-a-plus-sign-free-vector.jpg",
           "titleText": "Spooky Savings on Premium!",
           "bodyText": "Boo! Save 70% on Premium this Halloween! Don’t miss the chance to upgrade to the best version of Lose It!.",
-          "actionText": "",
           "buttonText": "Save 70%",
-          "noThanksText": "No thanks",
-          "messaging": {
-            "takeoverId": "black-friday"
-          },
           "weight": 1
         }
       ]

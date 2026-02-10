@@ -149,10 +149,10 @@
       "creativeTreatments": [
         {
           "id": "jan23-lifetime-presale-fireworks",
-          "heroImageUrl": "https://assets.loseit.com/2022/lifetimefireworks68.gif",
+          "imageUrl": "https://assets.loseit.com/2022/lifetimefireworks68.gif",
           "titleText": "68% Off Flash Sale",
           "bodyText": "Who says we can't celebrate the New Year early? Upgrade now to save 68% and get the very best version of Lose It! for life.",
-          "actionText": "",
+          "cardTitle": "",
           "buttonText": "Save 68%",
           "noThanksText": "No thanks",
           "weight": 1
@@ -246,10 +246,10 @@
       "creativeTreatments": [
         {
           "id": "jan23-lifetime-presale-fireworks",
-          "heroImageUrl": "https://assets.loseit.com/2022/lifetimefireworks68.gif",
+          "imageUrl": "https://assets.loseit.com/2022/lifetimefireworks68.gif",
           "titleText": "68% Off Flash Sale",
           "bodyText": "Who says we can't celebrate the New Year early? Upgrade now to save 68% and get the very best version of Lose It! for life.",
-          "actionText": "",
+          "cardTitle": "",
           "buttonText": "Save 68%",
           "noThanksText": "No thanks",
           "weight": 1
