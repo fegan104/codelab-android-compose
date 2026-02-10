@@ -6,7 +6,6 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.KModifier
 import com.squareup.kotlinpoet.MemberName
-import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
@@ -30,7 +29,7 @@ class VegasCodeGenerator internal constructor(
     private val vegasCorePackage = "com.fitnow.vegas.core"
     private val querySourceType = ClassName(vegasCorePackage, "QuerySource")
     private val queryDataSourceType = ClassName(vegasCorePackage, "QueryDataSource")
-    private val vegasSourceKeyRegistryType = ClassName(vegasCorePackage, "VegasSourceKeyRegistry")
+    private val vegasSourceKeyParserType = ClassName(vegasCorePackage, "SourceKeyParser")
     private val sourceKeyType = ClassName(vegasCorePackage, "SourceKey")
     private val generatedDataSourceType = ClassName(packageName, "GeneratedVegasDataSource")
 
@@ -58,8 +57,8 @@ class VegasCodeGenerator internal constructor(
                     addType(generateKeyContainer(sourceName, keys))
                 }
 
-                // Add registry
-                addType(generateRegistry())
+                // Add SourceKey parser
+                addType(generateSourceKeyParser())
             }
             .build()
     }
@@ -259,10 +258,10 @@ class VegasCodeGenerator internal constructor(
     }
 
     /**
-     * Generates the GeneratedVegasSourceKeyRegistry for string-to-key lookups.
+     * Generates the GeneratedVegasSourceKeyParser for string-to-key lookups.
      */
-    private fun generateRegistry(): TypeSpec {
-        val registryInterface = vegasSourceKeyRegistryType.parameterizedBy(generatedDataSourceType)
+    private fun generateSourceKeyParser(): TypeSpec {
+        val sourceKeyParserInterface = vegasSourceKeyParserType.parameterizedBy(generatedDataSourceType)
         val sourceKeyWildcard = sourceKeyType.parameterizedBy(
             generatedDataSourceType,
             STAR
@@ -274,9 +273,9 @@ class VegasCodeGenerator internal constructor(
         val whereParamsType = Map::class.asTypeName()
             .parameterizedBy(String::class.asTypeName(), String::class.asTypeName())
 
-        return TypeSpec.objectBuilder("GeneratedVegasSourceKeyRegistry")
+        return TypeSpec.objectBuilder("GeneratedVegasSourceKeyParser")
             .addKdoc("Registry for looking up generated SourceKeys by source and key names.")
-            .addSuperinterface(registryInterface)
+            .addSuperinterface(sourceKeyParserInterface)
             .addProperty(
                 PropertySpec.builder("keyMap", keyMapType)
                     .addModifiers(KModifier.PRIVATE)

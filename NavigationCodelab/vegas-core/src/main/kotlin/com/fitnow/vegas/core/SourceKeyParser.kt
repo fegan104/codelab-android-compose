@@ -22,7 +22,7 @@ package com.fitnow.vegas.core
  *
  * @param D The specific [QueryDataSource] implementation this registry is bound to.
  */
-interface VegasSourceKeyRegistry<D : QueryDataSource> {
+interface SourceKeyParser<D : QueryDataSource> {
     /**
      * Finds a SourceKey by its source name and key name.
      *

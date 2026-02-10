@@ -14,7 +14,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * @property registry The registry used to resolve string-based key references
  */
 internal class VegasRuleParser<D : QueryDataSource>(
-    val registry: VegasSourceKeyRegistry<D>
+    val registry: SourceKeyParser<D>
 ) {
     /**
      * Parses a list of RuleJson objects into a list of typed Rule objects.

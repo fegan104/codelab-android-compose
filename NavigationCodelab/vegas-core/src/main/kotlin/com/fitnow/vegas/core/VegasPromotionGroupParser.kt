@@ -11,7 +11,7 @@ import kotlinx.serialization.json.Json
  * @property registry The registry used to resolve string-based key references
  */
 class VegasPromotionGroupParser<D : QueryDataSource>(
-    private val registry: VegasSourceKeyRegistry<D>
+    private val registry: SourceKeyParser<D>
 ) {
     private val json = Json { ignoreUnknownKeys = true }
     private val ruleParser = VegasRuleParser(registry)
