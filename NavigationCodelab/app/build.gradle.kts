@@ -141,7 +141,7 @@ tasks.withType<KotlinCompile>().configureEach {
     }
 }
 
-configure<VegasExtension> {
-    promotionsDirectory.set(file("src/main/assets"))
-    packageName.set("com.example.compose.rally.generated")
+vegas {
+    promotionsDirectory = file("src/main/assets")
+    packageName = "com.example.compose.rally.generated"
 }
