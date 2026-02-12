@@ -14,10 +14,9 @@ import com.squareup.kotlinpoet.asTypeName
 /**
  * Generates type-safe Kotlin code from a Vegas manifest using KotlinPoet.
  * Produces:
- * - QuerySource implementations for each source
  * - GeneratedVegasDataSource interface with fetch methods
  * - Sealed key classes with type-safe resolve implementations
- * - GeneratedVegasSourceKeyRegistry for string-to-key lookups
+ * - SourceKeyParser for type safe string-to-key lookups
  */
 class VegasCodeGenerator internal constructor(
     private val sourcesAndKeys: Map<String, Set<SourceKeyInfo>>,
@@ -27,7 +26,6 @@ class VegasCodeGenerator internal constructor(
 
     // Core type references
     private val vegasCorePackage = "com.fitnow.vegas.core"
-    private val querySourceType = ClassName(vegasCorePackage, "QuerySource")
     private val queryDataSourceType = ClassName(vegasCorePackage, "QueryDataSource")
     private val vegasSourceKeyParserType = ClassName(vegasCorePackage, "SourceKeyParser")
     private val sourceKeyType = ClassName(vegasCorePackage, "SourceKey")
@@ -39,14 +37,10 @@ class VegasCodeGenerator internal constructor(
     fun generateFileSpec(): FileSpec {
         return FileSpec.builder(packageName, "VegasGeneratedApi")
             .apply {
+                addFileComment("Generated file. Do not edit!")
                 // Add PromotionGroupId sealed interface
                 if (promotionGroupIds.isNotEmpty()) {
                     addType(generatePromotionGroupId())
-                }
-
-                // Add QuerySource objects
-                sourcesAndKeys.keys.forEach { sourceName ->
-                    addType(generateQuerySource(sourceName))
                 }
 
                 // Add GeneratedVegasDataSource interface
@@ -94,17 +88,6 @@ class VegasCodeGenerator internal constructor(
                     )
                 }
             }
-            .build()
-    }
-
-    /**
-     * Generates a QuerySource object for a source.
-     */
-    private fun generateQuerySource(sourceName: String): TypeSpec {
-        val pascalName = sourceName.toPascalCase()
-        return TypeSpec.objectBuilder("${pascalName}Source")
-            .addKdoc("QuerySource for $sourceName data.")
-            .addSuperinterface(querySourceType)
             .build()
     }
 
@@ -186,8 +169,12 @@ class VegasCodeGenerator internal constructor(
                             // Add concrete key classes as nested classes
                             typeKeys.forEach { keyInfo ->
                                 val keyClassName = keyInfo.name.toPascalCase()
-                                val superclassName = ClassName(packageName, "${pascalSourceName}Keys", sealedClassName)
-                                
+                                val superclassName = ClassName(
+                                    packageName,
+                                    "${pascalSourceName}Keys",
+                                    sealedClassName
+                                )
+
                                 if (keyInfo.hasWhereClause) {
                                     // Companion object with KEY constant for accessing the raw key name
                                     val companionObject = TypeSpec.companionObjectBuilder()
@@ -202,13 +189,17 @@ class VegasCodeGenerator internal constructor(
 
                                     // Build constructor parameters and properties dynamically from where clause keys
                                     val constructorBuilder = FunSpec.constructorBuilder()
-                                    val whereProperties = keyInfo.wherePropertyNames.map { jsonKey ->
-                                        val camelName = jsonKey.toCamelCase()
-                                        constructorBuilder.addParameter(camelName, String::class)
-                                        PropertySpec.builder(camelName, String::class)
-                                            .initializer(camelName)
-                                            .build()
-                                    }
+                                    val whereProperties =
+                                        keyInfo.wherePropertyNames.map { jsonKey ->
+                                            val camelName = jsonKey.toCamelCase()
+                                            constructorBuilder.addParameter(
+                                                camelName,
+                                                String::class
+                                            )
+                                            PropertySpec.builder(camelName, String::class)
+                                                .initializer(camelName)
+                                                .build()
+                                        }
 
                                     // Generate a data class with where clause parameters
                                     addType(
@@ -261,7 +252,8 @@ class VegasCodeGenerator internal constructor(
      * Generates the GeneratedVegasSourceKeyParser for string-to-key lookups.
      */
     private fun generateSourceKeyParser(): TypeSpec {
-        val sourceKeyParserInterface = vegasSourceKeyParserType.parameterizedBy(generatedDataSourceType)
+        val sourceKeyParserInterface =
+            vegasSourceKeyParserType.parameterizedBy(generatedDataSourceType)
         val sourceKeyWildcard = sourceKeyType.parameterizedBy(
             generatedDataSourceType,
             STAR
@@ -315,13 +307,15 @@ class VegasCodeGenerator internal constructor(
                 sourcesAndKeys.forEach { (sourceName, keys) ->
                     val pascalSourceName = sourceName.toPascalCase()
                     keys.filter { it.hasWhereClause }.forEach { keyInfo ->
-                        val sealedClassName = "${pascalSourceName}${keyInfo.type.displayName}SourceKey"
+                        val sealedClassName =
+                            "${pascalSourceName}${keyInfo.type.displayName}SourceKey"
                         val keyClassName = keyInfo.name.toPascalCase()
                         // Build constructor args dynamically from the where clause property names
-                        val constructorArgs = keyInfo.wherePropertyNames.joinToString(", ") { jsonKey ->
-                            val camelName = jsonKey.toCamelCase()
-                            "$camelName = whereParams[\"$jsonKey\"] ?: \"\""
-                        }
+                        val constructorArgs =
+                            keyInfo.wherePropertyNames.joinToString(", ") { jsonKey ->
+                                val camelName = jsonKey.toCamelCase()
+                                "$camelName = whereParams[\"$jsonKey\"] ?: \"\""
+                            }
                         addStatement(
                             "sourceName == %S && keyName == %S -> %L",
                             sourceName,
@@ -349,7 +343,8 @@ class VegasCodeGenerator internal constructor(
                         // Skip keys with where clauses - they're data classes requiring constructor args
                         if (!keyInfo.hasWhereClause) {
                             // Key objects are nested inside the sealed class, e.g., UserKeys.UserStringSetSourceKey.Target
-                            val sealedClassName = "${pascalSourceName}${keyInfo.type.displayName}SourceKey"
+                            val sealedClassName =
+                                "${pascalSourceName}${keyInfo.type.displayName}SourceKey"
                             entries.add("(\"$sourceName\" to \"${keyInfo.name}\") to ${pascalSourceName}Keys.$sealedClassName.${keyInfo.name.toPascalCase()}")
                         }
                     }
