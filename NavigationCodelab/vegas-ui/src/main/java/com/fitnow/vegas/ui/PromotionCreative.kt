@@ -14,11 +14,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +35,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.fitnow.vegas.core.CardType.Banner
+import com.fitnow.vegas.core.CardType.FullHeight
 import com.fitnow.vegas.core.Creative
 import com.fitnow.vegas.core.QueryDataSource
 
@@ -53,22 +57,127 @@ fun <D : QueryDataSource> PromotionCreative(
     val response by vegasPromoter.currentPromotion.collectAsState(null)
 
     response?.let { selection ->
-        val (_, promo, creative) = selection
+        val (group, promo, creative) = selection
 
-        PromotionCreative(
-            creative = creative,
-            modifier = modifier,
-            onShown = {
-                clickListener.onShown(selection)
-            },
-            onActionClick = {
-                clickListener.onOpenAction(promo.actionUrl)
-            },
-            onDismissClick = {
-                vegasPromoter.onDismiss()
-                clickListener.onDismiss()
-            },
-        )
+        when (group.cardType) {
+            Banner -> {
+                PromotionCreativeBanner(
+                    creative = creative,
+                    isDismissible = promo.isDismissible,
+                    modifier = modifier,
+                    onShown = {
+                        clickListener.onShown(selection)
+                    },
+                    onActionClick = {
+                        clickListener.onOpenAction(promo.actionUrl)
+                    },
+                )
+            }
+
+            FullHeight -> {
+                PromotionCreativeFullHeight(
+                    creative = creative,
+                    isDismissible = promo.isDismissible,
+                    modifier = modifier,
+                    onShown = {
+                        clickListener.onShown(selection)
+                    },
+                    onActionClick = {
+                        clickListener.onOpenAction(promo.actionUrl)
+                    },
+                    onDismissClick = {
+                        vegasPromoter.onDismiss()
+                        clickListener.onDismiss()
+                    },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun PromotionCreativeBanner(
+    creative: Creative,
+    modifier: Modifier = Modifier,
+    isDismissible: Boolean = false,
+    onActionClick: () -> Unit = {},
+    onDismissClick: () -> Unit = {},
+    onShown: () -> Unit = {},
+) {
+    LaunchedEffect(creative.id) {
+        onShown()
+    }
+
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        onClick = { onActionClick() },
+        shape = RoundedCornerShape(16.dp),
+        elevation = 2.dp
+    ) {
+        if (isDismissible) {
+            // Dismissible layout with X button in upper right
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 8.dp, top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.Top
+                ) {
+                    // Text content
+                    creative.bodyText?.let { title ->
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.body1.copy(
+                                fontWeight = FontWeight.SemiBold,
+                            ),
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(top = 8.dp, bottom = 16.dp)
+                        )
+                    }
+
+                    // Close button (X)
+                    IconButton(
+                        onClick = onDismissClick,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = creative.noThanksText ?: "Close",
+                            tint = Color.Gray
+                        )
+                    }
+                }
+            }
+        } else {
+            // Standard layout with vertically centered arrow
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                creative.bodyText?.let { title ->
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.body1.copy(
+                            fontWeight = FontWeight.SemiBold,
+                        ),
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    contentDescription = creative.buttonText.orEmpty(),
+                    tint = MaterialTheme.colors.primary,
+                    modifier = Modifier.size(32.dp)
+                )
+            }
+        }
     }
 }
 
@@ -78,13 +187,15 @@ fun <D : QueryDataSource> PromotionCreative(
  *
  * @param creative The creative data to display
  * @param modifier Modifier for the card
+ * @param isDismissible Whether to show the close/dismiss button
  * @param onActionClick Callback when the primary action button is clicked
  * @param onDismissClick Callback when the dismiss/no thanks button is clicked
  */
 @Composable
-private fun PromotionCreative(
+private fun PromotionCreativeFullHeight(
     creative: Creative,
     modifier: Modifier = Modifier,
+    isDismissible: Boolean = true,
     onActionClick: () -> Unit = {},
     onDismissClick: () -> Unit = {},
     onShown: () -> Unit = {},
@@ -97,13 +208,11 @@ private fun PromotionCreative(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Header Row: Card Title and Close Icon
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Card Title (e.g. "EXPERT GUIDANCE")
                 if (creative.cardTitle != null) {
                     Text(
                         text = creative.cardTitle!!.uppercase(),
@@ -116,26 +225,25 @@ private fun PromotionCreative(
                     Spacer(Modifier.width(1.dp))
                 }
 
-                // Close Button (X)
-                IconButton(
-                    onClick = onDismissClick,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = creative.noThanksText ?: "Close",
-                        tint = Color.Gray
-                    )
+                if (isDismissible) {
+                    IconButton(
+                        onClick = onDismissClick,
+                        modifier = Modifier.size(24.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Close,
+                            contentDescription = creative.noThanksText ?: "Close",
+                            tint = Color.Gray
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Content Row: Image and Texts
             Row(
                 verticalAlignment = Alignment.Top
             ) {
-                // Hero Image (Strawberry)
                 creative.imageUrl?.let { imageUrl ->
                     AsyncImage(
                         model = imageUrl,
@@ -148,7 +256,6 @@ private fun PromotionCreative(
                     Spacer(modifier = Modifier.width(16.dp))
                 }
 
-                // Text Content
                 Column(modifier = Modifier.weight(1f)) {
                     creative.titleText?.let { title ->
                         Text(
@@ -169,7 +276,7 @@ private fun PromotionCreative(
                 }
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Footer: Action Button
             creative.buttonText?.let { buttonText ->
@@ -195,9 +302,9 @@ private fun PromotionCreative(
 
 @Preview(showBackground = true)
 @Composable
-private fun PromotionCreativePreview() {
+private fun PromotionCreativeFullHeightPreview() {
     MaterialTheme {
-        PromotionCreative(
+        PromotionCreativeFullHeight(
             creative = Creative(
                 id = "preview-creative",
                 imageUrl = "https://picsum.photos/400/200",
@@ -214,9 +321,9 @@ private fun PromotionCreativePreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun PromotionCreativeMinimalPreview() {
+private fun PromotionCreativeFullHeightMinimalPreview() {
     MaterialTheme {
-        PromotionCreative(
+        PromotionCreativeFullHeight(
             creative = Creative(
                 id = "minimal-creative",
                 titleText = "Quick Update",
@@ -225,5 +332,50 @@ private fun PromotionCreativeMinimalPreview() {
             ),
             modifier = Modifier.padding(16.dp)
         )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PromotionCreativeFullHeightNonDismissiblePreview() {
+    MaterialTheme {
+        PromotionCreativeFullHeight(
+            creative = Creative(
+                id = "non-dismissible-creative",
+                imageUrl = "https://picsum.photos/400/200",
+                titleText = "Important Update",
+                bodyText = "This promotion cannot be dismissed until you take action.",
+                cardTitle = "Action Required",
+                buttonText = "Take Action"
+            ),
+            isDismissible = false,
+            modifier = Modifier.padding(16.dp)
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PromotionCreativeBannerPreview() {
+    MaterialTheme {
+        Column(modifier = Modifier.padding(16.dp)) {
+            PromotionCreativeBanner(
+                creative = Creative(
+                    id = "banner-creative",
+                    bodyText = "Exclusive Black Friday Deals for Lifetime Members - Limited Time Only!",
+                    buttonText = "Learn More"
+                )
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            PromotionCreativeBanner(
+                creative = Creative(
+                    id = "banner-creative-dismissible",
+                    bodyText = "Exclusive Black Friday Deals for Lifetime Members - Limited Time Only!",
+                    buttonText = "Learn More",
+                    noThanksText = "Close"
+                ),
+                isDismissible = true
+            )
+        }
     }
 }

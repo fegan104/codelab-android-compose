@@ -1,6 +1,7 @@
 {
   "id": "dashboard-promo",
   "type": "affiliate",
+  "cardType": "fullHeight",
   "commonRulesV2": [
     {
       "comment": "targets: [free]",
@@ -60,6 +61,7 @@
   "promotions": [
     {
       "id": "androidHalloweenSalePremium-Control",
+      "isDismissible": true,
       "actionUrl": "loseit://upgrade",
       "rulesV2": [
         {
@@ -156,6 +158,7 @@
     },
     {
       "id": "androidHalloweenSalePremium-Treatment",
+      "isDismissible": true,
       "actionUrl": "loseit://upgrade",
       "rulesV2": [
         {

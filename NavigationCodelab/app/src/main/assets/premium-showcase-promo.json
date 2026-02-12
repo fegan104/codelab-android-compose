@@ -1,6 +1,7 @@
 {
   "id": "premium-showcase-promo",
   "type": "affiliate",
+  "cardType": "banner",
   "commonRulesV2": [
     {
       "comment": "targets: [free]",
@@ -64,6 +65,7 @@
   "promotions": [
     {
       "id": "androidHalloweenSalePremium-Control",
+      "isDismissible": true,
       "actionUrl": "loseit://upgrade",
       "rulesV2": [
         {
@@ -161,6 +163,7 @@
     },
     {
       "id": "androidHalloweenSalePremium-Treatment",
+      "isDismissible": true,
       "actionUrl": "loseit://upgrade",
       "rulesV2": [
         {

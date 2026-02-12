@@ -13,7 +13,7 @@ interface PromotionGroupId {
  * Represents a promotion group containing common rules and a list of promotions.
  * The common rules must all pass before any individual promotion is evaluated.
  *
- * @param D The specific VegasQueryDataSource implementation
+ * @param D The specific [QueryDataSource] implementation
  * @property id The unique identifier for this promotion group
  * @property type The type of promotion group (e.g., "affiliate")
  * @property commonRules Rules that must all pass before evaluating individual promotions
@@ -22,6 +22,7 @@ interface PromotionGroupId {
 data class PromotionGroup<D : QueryDataSource>(
     val id: String,
     val type: String,
+    val cardType: CardType,
     val commonRules: List<Rule<D, *>>,
     val promotions: List<Promotion<D>>
 )
@@ -29,15 +30,18 @@ data class PromotionGroup<D : QueryDataSource>(
 /**
  * Represents a single promotion within a promotion group.
  *
- * @param D The specific VegasQueryDataSource implementation
+ * @param D The specific [QueryDataSource] implementation
  * @property id The unique identifier for this promotion
+ * @property category Optional classification of what kind of product this promotion is for.
  * @property actionUrl Optional action URL for this promotion
  * @property rules Rules specific to this promotion that must all pass
  * @property creativeTreatments Available creative treatments for display
  */
 data class Promotion<D : QueryDataSource>(
     val id: String,
+    val category: String?,
     val actionUrl: String?,
+    val isDismissible: Boolean,
     val rules: List<Rule<D, *>>,
     val creativeTreatments: List<Creative>
 )
@@ -65,7 +69,9 @@ data class Creative(
 data class PromotionGroupJson(
     val id: String,
     val type: String,
-    @SerialName("commonRulesV2") val commonRules: List<RuleJson> = emptyList(),
+    val cardType: CardType,
+    @SerialName("commonRulesV2")
+    val commonRules: List<RuleJson> = emptyList(),
     val promotions: List<PromotionJson> = emptyList()
 )
 
@@ -76,6 +82,8 @@ data class PromotionGroupJson(
 @Serializable
 data class PromotionJson(
     val id: String,
+    val isDismissible: Boolean,
+    val category: String? = null,
     val actionUrl: String? = null,
     @SerialName("rulesV2") val rules: List<RuleJson> = emptyList(),
     val creativeTreatments: List<Creative> = emptyList()
@@ -101,6 +109,11 @@ data class RuleQueryJson(
     val where: JsonObject? = null,
     val default: JsonElement? = null
 )
+
+enum class CardType {
+    @SerialName("banner") Banner,
+    @SerialName("fullHeight") FullHeight,
+}
 
 /**
  * Selects a random Creative from the list based on the weight of each item.

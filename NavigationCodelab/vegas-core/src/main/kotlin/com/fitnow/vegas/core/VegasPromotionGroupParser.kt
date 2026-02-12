@@ -48,6 +48,7 @@ class VegasPromotionGroupParser<D : QueryDataSource>(
         PromotionGroup(
             id = jsonObject.id,
             type = jsonObject.type,
+            cardType = jsonObject.cardType,
             commonRules = ruleParser.parseRules(jsonObject.commonRules),
             promotions = jsonObject.promotions.map { it.toDomain() }
         )
@@ -56,7 +57,9 @@ class VegasPromotionGroupParser<D : QueryDataSource>(
     private fun PromotionJson.toDomain(): Promotion<D> = Promotion(
         id = id,
         actionUrl = actionUrl,
+        category = category,
         rules = ruleParser.parseRules(rules),
-        creativeTreatments = creativeTreatments
+        creativeTreatments = creativeTreatments,
+        isDismissible = isDismissible,
     )
 }
