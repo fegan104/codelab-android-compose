@@ -27,7 +27,7 @@ data class Rule<D : QueryDataSource, E>(
      * @param dataSource The typed data source to evaluate against (no casting needed!)
      * @return true if the rule condition is satisfied, false otherwise
      */
-    fun evaluate(dataSource: D): Boolean {
+    suspend fun evaluate(dataSource: D): Boolean {
         // Resolve the value from the data source - no casting needed!
         val resolvedValue = lhs.key.resolve(dataSource)
 

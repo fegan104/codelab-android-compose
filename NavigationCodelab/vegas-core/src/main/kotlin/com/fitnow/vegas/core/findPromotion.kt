@@ -16,7 +16,7 @@ package com.fitnow.vegas.core
  * @param dataSource The data source to evaluate rules against
  * @return The first matching Promotion, or null if no promotion qualifies
  */
-fun <D : QueryDataSource> findPromotion(
+suspend fun <D : QueryDataSource> findPromotion(
     promoGroup: PromotionGroup<D>,
     dataSource: D,
 ): Promotion<D>? {

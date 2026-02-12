@@ -135,7 +135,7 @@ class VegasCodeGenerator internal constructor(
                         addFunction(
                             FunSpec.builder("fetch${pascalSourceName}${type.displayName}")
                                 .addKdoc("Fetches a ${type.displayName} value for the given key from $sourceName.")
-                                .addModifiers(KModifier.ABSTRACT)
+                                .addModifiers(KModifier.ABSTRACT, KModifier.SUSPEND)
                                 .addParameter("key", sourceKeyClassName)
                                 .returns(type.kotlinTypeName.copy(nullable = true))
                                 .build()
@@ -174,7 +174,7 @@ class VegasCodeGenerator internal constructor(
                         )
                         .addFunction(
                             FunSpec.builder("resolve")
-                                .addModifiers(KModifier.OVERRIDE)
+                                .addModifiers(KModifier.OVERRIDE, KModifier.SUSPEND)
                                 .addParameter("dataSource", generatedDataSourceType)
                                 .returns(type.kotlinTypeName.copy(nullable = true))
                                 .addStatement(

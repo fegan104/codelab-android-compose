@@ -26,7 +26,7 @@ class AppVegasDataSource(
         return config.getBoolean("kill-switch-${creative.id}") != true
     }
 
-    override fun fetchSurveyHistoryInt(key: SurveyHistoryKeys.SurveyHistoryIntSourceKey): Int? {
+    override suspend fun fetchSurveyHistoryInt(key: SurveyHistoryKeys.SurveyHistoryIntSourceKey): Int? {
         return when (key) {
             is SurveyHistoryKeys.SurveyHistoryIntSourceKey.DaysSinceLastShown -> {
                 key.surveyName
@@ -35,26 +35,26 @@ class AppVegasDataSource(
         }
     }
 
-    override fun fetchUserStringSet(key: UserKeys.UserStringSetSourceKey): Set<String>? {
+    override suspend fun fetchUserStringSet(key: UserKeys.UserStringSetSourceKey): Set<String>? {
         return when (key) {
             UserKeys.UserStringSetSourceKey.Target -> setOf("free")
         }
     }
 
-    override fun fetchUserInt(key: UserKeys.UserIntSourceKey): Int? {
+    override suspend fun fetchUserInt(key: UserKeys.UserIntSourceKey): Int? {
         return when (key) {
             UserKeys.UserIntSourceKey.Day -> 9999
             UserKeys.UserIntSourceKey.DaysSinceAccountCreated -> 45
         }
     }
 
-    override fun fetchUserBoolean(key: UserKeys.UserBooleanSourceKey): Boolean? {
+    override suspend fun fetchUserBoolean(key: UserKeys.UserBooleanSourceKey): Boolean? {
         return when (key) {
             UserKeys.UserBooleanSourceKey.TrialState -> false
         }
     }
 
-    override fun fetchPromotionHistoryInt(
+    override suspend fun fetchPromotionHistoryInt(
         key: PromotionHistoryKeys.PromotionHistoryIntSourceKey
     ): Int? {
         return when (key) {
@@ -74,7 +74,7 @@ class AppVegasDataSource(
         }
     }
 
-    override fun fetchConfigurationBoolean(
+    override suspend fun fetchConfigurationBoolean(
         key: ConfigurationKeys.ConfigurationBooleanSourceKey
     ): Boolean? {
         return config.getBoolean(key.raw)

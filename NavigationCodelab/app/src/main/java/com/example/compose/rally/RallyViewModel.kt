@@ -9,8 +9,7 @@ import com.fitnow.vegas.ui.VegasPromoter
 
 class RallyViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val appDataSource = AppVegasDataSource()
-    val dashboardPromoter = VegasPromoter.newBuilder(appDataSource, GeneratedVegasSourceKeyParser)
+    val dashboardPromoter = VegasPromoter.newBuilder(AppVegasDataSource(), GeneratedVegasSourceKeyParser)
         .buildFromAssets(app, PromotionGroupIds.DashboardPromo)
         .getOrThrow()
 
