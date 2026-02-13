@@ -1,7 +1,9 @@
 package com.fitnow.vegas.core
 
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
@@ -50,103 +52,69 @@ internal class VegasRuleParser<D : QueryDataSource>(
 
         // Determine the type and create the appropriate rule
         return when (sourceKey) {
-            is IntSourceKey -> createIntRule(
-                sourceKey,
-                operatorName,
-                valueElement,
-                defaultElement,
-            )
+            is IntSourceKey -> {
+                createRule(
+                    key = sourceKey,
+                    operatorName = operatorName,
+                    valueElement = valueElement,
+                    defaultElement = defaultElement,
+                    parseOp = ::parseIntOperator,
+                    extractValue = { it.jsonPrimitive.int },
+                    extractDefault = { it.jsonPrimitive.intOrNull },
+                )
+            }
 
-            is StringSourceKey -> createStringRule(
-                sourceKey,
-                operatorName,
-                valueElement,
-                defaultElement,
-            )
+            is StringSourceKey -> {
+                createRule(
+                    key = sourceKey,
+                    operatorName = operatorName,
+                    valueElement = valueElement,
+                    defaultElement = defaultElement,
+                    parseOp = ::parseStringOperator,
+                    extractValue = { it.jsonPrimitive.content },
+                    extractDefault = { it.jsonPrimitive.content },
+                )
+            }
 
-            is BooleanSourceKey -> createBooleanRule(
-                sourceKey,
-                operatorName,
-                valueElement,
-                defaultElement,
-            )
+            is BooleanSourceKey -> {
+                createRule(
+                    key = sourceKey,
+                    operatorName = operatorName,
+                    valueElement = valueElement,
+                    defaultElement = defaultElement,
+                    parseOp = ::parseBooleanOperator,
+                    extractValue = { it.jsonPrimitive.boolean },
+                    extractDefault = { it.jsonPrimitive.booleanOrNull },
+                )
+            }
 
-            is StringSetSourceKey -> createStringSetRule(
-                sourceKey,
-                operatorName,
-                valueElement,
-                defaultElement,
-            )
+            is StringSetSourceKey -> {
+                createRule(
+                    key = sourceKey,
+                    operatorName = operatorName,
+                    valueElement = valueElement,
+                    defaultElement = defaultElement,
+                    parseOp = ::parseStringSetOperator,
+                    extractValue = { it.jsonArray.map { e -> e.jsonPrimitive.content }.toSet() },
+                    extractDefault = { it.jsonArray.map { e -> e.jsonPrimitive.content }.toSet() }
+                )
+            }
         }
     }
 
-    private fun createIntRule(
-        key: IntSourceKey<D>,
+    private fun <T, O> createRule(
+        key: SourceKey<D, T>,
         operatorName: String,
         valueElement: JsonElement,
         defaultElement: JsonElement?,
-    ): Rule<D, Int> {
-        val operator = parseIntOperator(operatorName)
-        val value = valueElement.jsonPrimitive.intOrNull
-            ?: throw IllegalArgumentException("Expected integer value for int rule")
-        val default = defaultElement?.jsonPrimitive?.intOrNull
-
+        parseOp: (String) -> O,
+        extractValue: (JsonElement) -> T,
+        extractDefault: (JsonElement) -> T?
+    ): Rule<D, T> where O : RuleOperator<T> {
         return Rule(
-            operator = operator,
-            rhs = value,
-            lhs = RuleQuery(key, default)
-        )
-    }
-
-    private fun createStringRule(
-        key: StringSourceKey<D>,
-        operatorName: String,
-        valueElement: JsonElement,
-        defaultElement: JsonElement?,
-    ): Rule<D, String> {
-        val operator = parseStringOperator(operatorName)
-        val value = valueElement.jsonPrimitive.content
-        val default = defaultElement?.jsonPrimitive?.content
-
-        return Rule(
-            operator = operator,
-            rhs = value,
-            lhs = RuleQuery(key, default)
-        )
-    }
-
-    private fun createBooleanRule(
-        key: BooleanSourceKey<D>,
-        operatorName: String,
-        valueElement: JsonElement,
-        defaultElement: JsonElement?,
-    ): Rule<D, Boolean> {
-        val operator = parseBooleanOperator(operatorName)
-        val value = valueElement.jsonPrimitive.booleanOrNull
-            ?: throw IllegalArgumentException("Expected boolean value for boolean rule")
-        val default = defaultElement?.jsonPrimitive?.booleanOrNull
-
-        return Rule(
-            operator = operator,
-            rhs = value,
-            lhs = RuleQuery(key, default)
-        )
-    }
-
-    private fun createStringSetRule(
-        key: StringSetSourceKey<D>,
-        operatorName: String,
-        valueElement: JsonElement,
-        defaultElement: JsonElement?,
-    ): Rule<D, Set<String>> {
-        val operator = parseStringSetOperator(operatorName)
-        val values = valueElement.jsonArray.map { it.jsonPrimitive.content }.toSet()
-        val default = defaultElement?.jsonArray?.map { it.jsonPrimitive.content }?.toSet()
-
-        return Rule(
-            operator = operator,
-            rhs = values,
-            lhs = RuleQuery(key, default)
+            operator = parseOp(operatorName),
+            rhs = extractValue(valueElement),
+            lhs = RuleQuery(key, defaultElement?.let { extractDefault(it) })
         )
     }
 
