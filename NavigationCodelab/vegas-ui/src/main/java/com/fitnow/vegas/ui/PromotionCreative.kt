@@ -113,8 +113,6 @@ private fun PromotionCreativeBanner(
     Card(
         modifier = modifier.fillMaxWidth(),
         onClick = { onActionClick() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = 2.dp
     ) {
         if (isDismissible) {
             // Dismissible layout with X button in upper right
@@ -269,7 +267,7 @@ private fun PromotionCreativeFullHeight(
                     }
 
                     creative.bodyText?.let { body ->
-                        Text(
+                         Text(
                             text = body,
                             style = MaterialTheme.typography.body1
                         )
