@@ -22,7 +22,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -72,7 +75,9 @@ class RallyActivity : ComponentActivity() {
                     PromotionCreative(
                         vegasPromoter = it,
                         clickListener = clickListener,
-                        modifier = Modifier.padding(horizontal = 16.dp).padding(top = 16.dp),
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                            .padding(top = 16.dp),
                     )
                 }
             }
@@ -89,7 +94,7 @@ fun RallyApp(
         val jsonInputScreen = remember { JsonInput(viewModel) }
         val allScreens = remember { rallyTabRowScreens + jsonInputScreen }
         var currentScreen: RallyDestination by remember { mutableStateOf(Overview) }
-        
+
         Scaffold(
             topBar = {
                 RallyTabRow(
@@ -99,8 +104,12 @@ fun RallyApp(
                 )
             }
         ) { innerPadding ->
-            Box(Modifier.padding(innerPadding)) {
-                Column {
+            Box(
+                Modifier
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                Column(Modifier.imePadding()) {
                     promoSlot()
                     currentScreen.screen()
                 }

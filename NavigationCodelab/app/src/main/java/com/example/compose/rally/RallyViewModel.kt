@@ -18,9 +18,6 @@ class RallyViewModel(app: Application) : AndroidViewModel(app) {
         if (jsonContent.isBlank()) return null
         return VegasPromoter.newBuilder(MockVegasDataSource(), MockVegasSourceKeyParser(jsonContent))
             .buildFromJson(jsonContent)
-            .onFailure { reason ->
-                Log.e("RallyViewModel", "Error building promoter from JSON: $reason", reason)
-            }
             .getOrNull()
     }
 }

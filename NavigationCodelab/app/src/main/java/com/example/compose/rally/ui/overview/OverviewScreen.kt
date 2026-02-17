@@ -67,7 +67,6 @@ fun OverviewScreen(
     Column(
         modifier = Modifier
             .padding(16.dp)
-            .verticalScroll(rememberScrollState())
             .semantics { contentDescription = "Overview Screen" }
     ) {
         AlertCard()
