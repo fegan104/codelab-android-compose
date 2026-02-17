@@ -23,6 +23,7 @@ plugins {
     id("kotlin-android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.fitnow.vegas")
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -104,6 +105,7 @@ dependencies {
     implementation("com.google.android.material:material:1.13.0")
     implementation(project(":vegas-core"))
     implementation(project(":vegas-ui"))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     // Compose
     implementation("androidx.compose.runtime:runtime")

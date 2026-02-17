@@ -20,6 +20,7 @@ suspend fun <D : QueryDataSource> findPromotion(
     promoGroup: PromotionGroup<D>,
     dataSource: D,
 ): Promotion<D>? {
+    return promoGroup.promotions.random()
     // Step 1: Evaluate all common rules first
     // If any common rule fails, the entire group fails
     val commonRulesPassed = promoGroup.commonRules.all { rule ->

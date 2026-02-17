@@ -4,54 +4,37 @@ import com.fitnow.vegas.core.QueryDataSource
 
 /**
  * Mock implementation of QueryDataSource for Rally app.
- * Provides mock data for promotion evaluation.
+ * Provides static mock data for promotion evaluation.
+ * Parameters are intentionally unused as this returns static values.
  */
+@Suppress("UNUSED_PARAMETER")
 class MockVegasDataSource : QueryDataSource {
-    
-    // Mock user data
-    val userTargets: Set<String> = setOf("free", "premium")
-    val userDay: Int = 8800
-    val userTrialState: Boolean = false
-    val userDaysSinceAccountCreated: Int = 30
-    
-    // Mock promotion history data
-    val promotionTimesShownMap: MutableMap<String, Int> = mutableMapOf()
-    val promotionDaysSinceLastShownMap: MutableMap<String, Int> = mutableMapOf()
-    
-    // Mock configuration data
-    val configurationMap: Map<String, Boolean> = mapOf(
-        "androidPremiumTimerTest" to false,
-        "showDashboardPromo" to true
-    )
-    
-    // Mock survey history data
-    val surveyDaysSinceLastShownMap: MutableMap<String, Int> = mutableMapOf()
-    
+
     /**
-     * Get times a promotion group has been shown.
+     * Returns a static Int value (1) for any int query.
      */
-    fun getPromotionTimesShown(historyType: String, id: String): Int {
-        return promotionTimesShownMap["$historyType:$id"] ?: 0
+    fun getInt(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): Int {
+        return 1
     }
-    
+
     /**
-     * Get days since a promotion was last shown.
+     * Returns a static empty String for any string query.
      */
-    fun getPromotionDaysSinceLastShown(historyType: String, id: String): Int {
-        return promotionDaysSinceLastShownMap["$historyType:$id"] ?: 100
+    fun getString(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): String {
+        return ""
     }
-    
+
     /**
-     * Get days since a survey was last shown.
+     * Returns a static false for any boolean query.
      */
-    fun getSurveyDaysSinceLastShown(surveyName: String, stepName: String): Int {
-        return surveyDaysSinceLastShownMap["$surveyName:$stepName"] ?: 9000
+    fun getBoolean(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): Boolean {
+        return false
     }
-    
+
     /**
-     * Get configuration value.
+     * Returns an empty Set for any string set query.
      */
-    fun getConfiguration(key: String): Boolean {
-        return configurationMap[key] ?: false
+    fun getStringSet(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): Set<String> {
+        return emptySet()
     }
 }
