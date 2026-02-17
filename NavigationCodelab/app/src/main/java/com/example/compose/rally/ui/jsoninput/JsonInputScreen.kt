@@ -6,6 +6,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.example.compose.rally.RallyViewModel
 
@@ -33,7 +34,7 @@ fun JsonInputScreen(
             label = { Text("JSON Content") },
             placeholder = { Text("Paste your promotion JSON here...") },
             maxLines = Int.MAX_VALUE,
-            textStyle = MaterialTheme.typography.body2,
+            textStyle = MaterialTheme.typography.body2.copy(fontFamily = FontFamily.Monospace),
         )
     }
 }
