@@ -22,11 +22,13 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Money
 import androidx.compose.material.icons.filled.MoneyOff
 import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.compose.rally.ui.accounts.AccountsScreen
 import com.example.compose.rally.ui.accounts.SingleAccountScreen
 import com.example.compose.rally.ui.bills.BillsScreen
+import com.example.compose.rally.ui.controlpanel.ControlPanelScreen
 import com.example.compose.rally.ui.jsoninput.JsonInputScreen
 import com.example.compose.rally.ui.overview.OverviewScreen
 
@@ -39,44 +41,26 @@ interface RallyDestination {
     val screen: @Composable () -> Unit
 }
 
-/**
- * Rally app navigation destinations
- */
-object Overview : RallyDestination {
-    override val icon = Icons.Filled.PieChart
-    override val route = "overview"
-    override val screen: @Composable () -> Unit = { OverviewScreen() }
-}
-
-object Accounts : RallyDestination {
-    override val icon = Icons.Filled.AttachMoney
-    override val route = "accounts"
-    override val screen: @Composable () -> Unit = { AccountsScreen() }
-}
-
-object Bills : RallyDestination {
-    override val icon = Icons.Filled.MoneyOff
-    override val route = "bills"
-    override val screen: @Composable () -> Unit = { BillsScreen() }
-}
-
-object SingleAccount : RallyDestination {
-    // Added for simplicity, this icon will not in fact be used, as SingleAccount isn't
-    // part of the RallyTabRow selection
-    override val icon = Icons.Filled.Money
-    override val route = "single_account"
-    override val screen: @Composable () -> Unit = { SingleAccountScreen() }
-    const val accountTypeArg = "account_type"
-}
-
 class JsonInput(private val viewModel: RallyViewModel) : RallyDestination {
     override val icon = Icons.Filled.Edit
-    override val route = "json_input"
+    override val route = "json input"
     override val screen: @Composable () -> Unit = {
         JsonInputScreen(viewModel)
     }
 }
 
+class ControlPanel(private val viewModel: RallyViewModel) : RallyDestination {
+    override val icon = Icons.Filled.Tune
+    override val route = "control panel"
+    override val screen: @Composable () -> Unit = {
+        ControlPanelScreen(
+            entries = viewModel.sourceKeyEntries,
+            dataSource = viewModel.dataSource,
+            onResetAll = { viewModel.resetAllValues() }
+        )
+    }
+}
+
 // Screens to be displayed in the top RallyTabRow
-// Note: JsonInput requires a viewModel parameter, so it's added dynamically
-val rallyTabRowScreens = listOf(Overview, Accounts, Bills)
+// Note: JsonInput and ControlPanel require a viewModel parameter, so they're added dynamically
+val rallyTabRowScreens = emptyList<RallyDestination>()

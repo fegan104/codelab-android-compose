@@ -9,6 +9,9 @@ import com.fitnow.vegas.core.SourceKeyParser
 import com.fitnow.vegas.core.StringSetSourceKey
 import com.fitnow.vegas.core.StringSourceKey
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.booleanOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Parser for resolving SourceKeys from JSON source/key names.
@@ -31,6 +34,50 @@ class MockVegasSourceKeyParser(rawJson: String) : SourceKeyParser<MockVegasDataS
                 addAll(promotion.rules)
             }
         }
+
+    /**
+     * Extracts all unique source/key entries from the parsed JSON.
+     * Each entry includes the type determined from the operator and the default value if specified.
+     */
+    fun getAllEntries(): List<MockSourceKeyEntry> {
+        val seenIds = mutableSetOf<String>()
+        return allRules.mapNotNull { rule ->
+            val source = rule.lhs.source
+            val key = rule.lhs.key
+            val whereParams = rule.lhs.where?.entries?.associate { (k, v) -> k to v.jsonPrimitive.content }
+            val defaultElement = rule.lhs.default
+
+            val entry = when (operatorToKeyType(rule.operator)) {
+                KeyType.INT -> {
+                    val defaultValue = defaultElement?.jsonPrimitive?.intOrNull
+                        ?: MockVegasDataSource.DEFAULT_INT
+                    MockSourceKeyEntry.IntEntry(source, key, whereParams, defaultValue)
+                }
+                KeyType.STRING -> {
+                    val defaultValue = defaultElement?.jsonPrimitive?.content
+                        ?: MockVegasDataSource.DEFAULT_STRING
+                    MockSourceKeyEntry.StringEntry(source, key, whereParams, defaultValue)
+                }
+                KeyType.BOOLEAN -> {
+                    @Suppress("KotlinConstantConditions")
+                    val defaultValue = defaultElement?.jsonPrimitive?.booleanOrNull
+                        ?: MockVegasDataSource.DEFAULT_BOOLEAN
+                    MockSourceKeyEntry.BooleanEntry(source, key, whereParams, defaultValue)
+                }
+                KeyType.STRING_SET -> {
+                    // StringSet defaults are rarely specified in JSON, use empty set
+                    MockSourceKeyEntry.StringSetEntry(source, key, whereParams, MockVegasDataSource.DEFAULT_STRING_SET)
+                }
+            }
+
+            // Only include unique entries
+            if (seenIds.add(entry.uniqueId)) {
+                entry
+            } else {
+                null
+            }
+        }
+    }
 
     /**
      * Finds a rule matching the given source and key names.

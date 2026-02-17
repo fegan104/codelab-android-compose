@@ -26,7 +26,7 @@ fun JsonInputScreen(
         
         OutlinedTextField(
             value = viewModel.jsonContent,
-            onValueChange = { viewModel.jsonContent = it },
+            onValueChange = { viewModel.updateJsonContent(it) },
             modifier = Modifier
                 .fillMaxWidth()
                 .height(400.dp),

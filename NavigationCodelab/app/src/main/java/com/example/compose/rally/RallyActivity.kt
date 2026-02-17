@@ -92,8 +92,9 @@ fun RallyApp(
 ) {
     RallyTheme {
         val jsonInputScreen = remember { JsonInput(viewModel) }
-        val allScreens = remember { rallyTabRowScreens + jsonInputScreen }
-        var currentScreen: RallyDestination by remember { mutableStateOf(Overview) }
+        val controlPanelScreen = remember { ControlPanel(viewModel) }
+        val allScreens = remember { rallyTabRowScreens + jsonInputScreen + controlPanelScreen }
+        var currentScreen: RallyDestination by remember { mutableStateOf(jsonInputScreen) }
 
         Scaffold(
             topBar = {
