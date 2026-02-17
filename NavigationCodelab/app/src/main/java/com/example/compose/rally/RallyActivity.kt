@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,25 +63,37 @@ class RallyActivity : ComponentActivity() {
         setContent {
             val viewModel by viewModels<RallyViewModel>()
 
-            RallyApp {
-                PromotionCreative(
-                    vegasPromoter = viewModel.dashboardPromoter,
-                    clickListener = clickListener,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
+            RallyApp(viewModel = viewModel) {
+                val promoter = remember(viewModel.jsonContent) {
+                    viewModel.buildPromoterFromJson()
+                }
+
+                promoter?.let {
+                    PromotionCreative(
+                        vegasPromoter = it,
+                        clickListener = clickListener,
+                        modifier = Modifier.padding(horizontal = 16.dp).padding(top = 16.dp),
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun RallyApp(promoSlot: @Composable () -> Unit) {
+fun RallyApp(
+    viewModel: RallyViewModel,
+    promoSlot: @Composable () -> Unit
+) {
     RallyTheme {
+        val jsonInputScreen = remember { JsonInput(viewModel) }
+        val allScreens = remember { rallyTabRowScreens + jsonInputScreen }
         var currentScreen: RallyDestination by remember { mutableStateOf(Overview) }
+        
         Scaffold(
             topBar = {
                 RallyTabRow(
-                    allScreens = rallyTabRowScreens,
+                    allScreens = allScreens,
                     onTabSelected = { screen -> currentScreen = screen },
                     currentScreen = currentScreen
                 )

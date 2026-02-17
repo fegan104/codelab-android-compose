@@ -16,17 +16,16 @@
 
 package com.example.compose.rally.ui.theme
 
-import androidx.compose.material.darkColors
+
+import androidx.compose.material.lightColors
 import androidx.compose.ui.graphics.Color
 
-val Green500 = Color(0xFF1EB980)
-val DarkBlue900 = Color(0xFF26282F)
-
 // Rally is always dark themed.
-val ColorPalette = darkColors(
-    primary = Green500,
-    surface = DarkBlue900,
-    onSurface = Color.White,
-    background = DarkBlue900,
-    onBackground = Color.White
+val ColorPalette = lightColors(
+    primary = Color(0xFFED7200),
+    secondary = Color(0xFFDD6A00),
+    surface = Color(0xFFF2F2F2),
+    onSurface = Color(0xFF000000),
+    error = Color(0xFFB3261E),
+    onError = Color(0xFFFFFFFF),
 )

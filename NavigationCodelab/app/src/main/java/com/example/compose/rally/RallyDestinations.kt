@@ -18,6 +18,7 @@ package com.example.compose.rally
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Money
 import androidx.compose.material.icons.filled.MoneyOff
 import androidx.compose.material.icons.filled.PieChart
@@ -26,6 +27,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.compose.rally.ui.accounts.AccountsScreen
 import com.example.compose.rally.ui.accounts.SingleAccountScreen
 import com.example.compose.rally.ui.bills.BillsScreen
+import com.example.compose.rally.ui.jsoninput.JsonInputScreen
 import com.example.compose.rally.ui.overview.OverviewScreen
 
 /**
@@ -67,5 +69,14 @@ object SingleAccount : RallyDestination {
     const val accountTypeArg = "account_type"
 }
 
+class JsonInput(private val viewModel: RallyViewModel) : RallyDestination {
+    override val icon = Icons.Filled.Edit
+    override val route = "json_input"
+    override val screen: @Composable () -> Unit = {
+        JsonInputScreen(viewModel)
+    }
+}
+
 // Screens to be displayed in the top RallyTabRow
+// Note: JsonInput requires a viewModel parameter, so it's added dynamically
 val rallyTabRowScreens = listOf(Overview, Accounts, Bills)
