@@ -7,6 +7,13 @@ package com.fitnow.vegas.core
 interface QueryDataSource {
 
     /**
+     * Version counter that increments when data changes.
+     * Used to trigger recomposition when data source values are updated.
+     * Default implementation returns 0 (no change tracking).
+     */
+    val version: Int get() = 0
+
+    /**
      * Optional method to provide custom rules to determine a promotion's eligibility beyond
      * just its rules.
      *

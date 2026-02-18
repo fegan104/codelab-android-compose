@@ -36,8 +36,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.compose.rally.ui.components.RallyTabRow
 import com.example.compose.rally.ui.theme.RallyTheme
-import com.fitnow.vegas.ui.PromotionCreative
 import com.fitnow.vegas.ui.PromotionCreativeClickListener
+import com.fitnow.vegas.ui.PromotionList
 import com.fitnow.vegas.ui.VegasResponse
 
 /**
@@ -72,8 +72,9 @@ class RallyActivity : ComponentActivity() {
                 }
 
                 promoter?.let {
-                    PromotionCreative(
+                    PromotionList(
                         vegasPromoter = it,
+                        dataSource = it.getDataSource(),
                         clickListener = clickListener,
                         modifier = Modifier
                             .padding(horizontal = 16.dp)

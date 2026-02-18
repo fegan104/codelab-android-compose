@@ -2,6 +2,7 @@ package com.fitnow.vegas.ui
 
 import android.content.Context
 import android.util.Log
+import com.fitnow.vegas.core.Promotion
 import com.fitnow.vegas.core.PromotionGroup
 import com.fitnow.vegas.core.PromotionGroupId
 import com.fitnow.vegas.core.QueryDataSource
@@ -12,6 +13,8 @@ import com.fitnow.vegas.core.weightedRandom
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 
 class VegasPromoter<D : QueryDataSource> private constructor(
@@ -20,6 +23,26 @@ class VegasPromoter<D : QueryDataSource> private constructor(
 ) {
 
     private val _currentPromotion = MutableStateFlow<VegasResponse<D>?>(null)
+
+    val allCreatives: Flow<List<VegasResponse<D>>> = flow {
+        val responses = promotionGroup.promotions.flatMap { promo ->
+            promo.creativeTreatments.map {
+                VegasResponse(
+                    group = promotionGroup,
+                    promotion = promo,
+                    creative = it,
+                )
+            }
+        }
+
+        emit(responses)
+    }
+
+    val promotions: List<Promotion<D>> = promotionGroup.promotions
+
+    fun getPromotionGroup(): PromotionGroup<D> = promotionGroup
+
+    fun getDataSource(): D = dataSource
 
     val currentPromotion: Flow<VegasResponse<D>?> = _currentPromotion.onStart {
         val response = findPromotion(promotionGroup, dataSource)?.let { promotion ->

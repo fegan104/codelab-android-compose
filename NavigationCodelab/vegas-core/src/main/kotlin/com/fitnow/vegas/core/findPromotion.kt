@@ -20,29 +20,35 @@ suspend fun <D : QueryDataSource> findPromotion(
     promoGroup: PromotionGroup<D>,
     dataSource: D,
 ): Promotion<D>? {
-    return promoGroup.promotions.random()
     // Step 1: Evaluate all common rules first
     // If any common rule fails, the entire group fails
-    val commonRulesPassed = promoGroup.commonRules.all { rule ->
-        rule.evaluate(dataSource)
-    }
-
-    if (!commonRulesPassed) {
+    if (!dataSource.commonRulesPassed(promoGroup)) {
         return null
     }
 
     // Step 2: Evaluate promotions in priority order (list order = priority)
     // Return the first promotion where all rules pass
     for (promotion in promoGroup.promotions) {
-        val promotionRulesPassed = promotion.rules.all { rule ->
-            dataSource.customPromotionRules(promoGroup, promotion) && rule.evaluate(dataSource)
-        }
-
-        if (promotionRulesPassed) {
+        if (dataSource.promotionRulesPassed(promoGroup, promotion)) {
             return promotion
         }
     }
 
     // No promotion matched
     return null
+}
+
+suspend fun <D : QueryDataSource> D.commonRulesPassed(promoGroup: PromotionGroup<D>): Boolean {
+    return promoGroup.commonRules.all { rule ->
+        rule.evaluate(this)
+    }
+}
+
+suspend fun <D : QueryDataSource> D.promotionRulesPassed(
+    promoGroup: PromotionGroup<D>,
+    promo: Promotion<D>,
+): Boolean {
+    return promo.rules.all { rule ->
+        customPromotionRules(promoGroup, promo) && rule.evaluate(this)
+    }
 }

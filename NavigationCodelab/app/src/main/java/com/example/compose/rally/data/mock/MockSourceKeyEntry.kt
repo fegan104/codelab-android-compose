@@ -42,27 +42,27 @@ sealed class MockSourceKeyEntry {
         override val source: String,
         override val key: String,
         override val whereParams: Map<String, String>? = null,
-        val defaultValue: Int = 1
+        val defaultValue: Int?
     ) : MockSourceKeyEntry()
     
     data class StringEntry(
         override val source: String,
         override val key: String,
         override val whereParams: Map<String, String>? = null,
-        val defaultValue: String = ""
+        val defaultValue: String?
     ) : MockSourceKeyEntry()
     
     data class BooleanEntry(
         override val source: String,
         override val key: String,
         override val whereParams: Map<String, String>? = null,
-        val defaultValue: Boolean = false
+        val defaultValue: Boolean?
     ) : MockSourceKeyEntry()
     
     data class StringSetEntry(
         override val source: String,
         override val key: String,
         override val whereParams: Map<String, String>? = null,
-        val defaultValue: Set<String> = emptySet()
+        val defaultValue: Set<String>?
     ) : MockSourceKeyEntry()
 }

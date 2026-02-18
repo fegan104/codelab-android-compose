@@ -197,7 +197,7 @@ private fun StringEntryInput(
     val currentValue = dataSource.getStringOrNull(entry.uniqueId) ?: entry.defaultValue
 
     OutlinedTextField(
-        value = currentValue,
+        value = currentValue.toString(),
         onValueChange = { newValue ->
             dataSource.setStringByUniqueId(entry.uniqueId, newValue)
         },
@@ -205,7 +205,7 @@ private fun StringEntryInput(
         label = { Text("Value") },
         singleLine = true,
         placeholder = { 
-            if (entry.defaultValue.isEmpty()) {
+            if (entry.defaultValue.isNullOrEmpty()) {
                 Text("(empty)")
             } else {
                 Text("Default: ${entry.defaultValue}")
@@ -228,7 +228,7 @@ private fun BooleanEntryInput(
     ) {
         Column {
             Text(
-                text = if (currentValue) "true" else "false",
+                text = currentValue.toString(),
                 style = MaterialTheme.typography.body1
             )
             Text(
@@ -239,7 +239,7 @@ private fun BooleanEntryInput(
         }
 
         Switch(
-            checked = currentValue,
+            checked = currentValue == true,
             onCheckedChange = { newValue ->
                 dataSource.setBooleanByUniqueId(entry.uniqueId, newValue)
             },
@@ -260,7 +260,7 @@ private fun StringSetEntryInput(
 
     Column {
         // Current items
-        if (currentValue.isEmpty()) {
+        if (currentValue.isNullOrEmpty()) {
             Text(
                 text = "(empty set)",
                 style = MaterialTheme.typography.body2,
@@ -316,7 +316,7 @@ private fun StringSetEntryInput(
                     if (newItemText.isNotBlank()) {
                         dataSource.setStringSetByUniqueId(
                             entry.uniqueId,
-                            currentValue + newItemText.trim()
+                            currentValue.orEmpty() + newItemText.trim()
                         )
                         newItemText = ""
                     }

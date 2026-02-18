@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Button
@@ -58,40 +57,48 @@ fun <D : QueryDataSource> PromotionCreative(
     val response by vegasPromoter.currentPromotion.collectAsState(null)
 
     response?.let { selection ->
-        val (group, promo, creative) = selection
+        CreativeResponse(selection, clickListener, modifier)
+    }
+}
 
-        when (group.cardType) {
-            Banner -> {
-                PromotionCreativeBanner(
-                    creative = creative,
-                    isDismissible = promo.isDismissible,
-                    modifier = modifier,
-                    onShown = {
-                        clickListener.onShown(selection)
-                    },
-                    onActionClick = {
-                        clickListener.onOpenAction(promo.actionUrl)
-                    },
-                )
-            }
+@Composable
+fun <D : QueryDataSource> CreativeResponse(
+    selection: VegasResponse<D>,
+    clickListener: PromotionCreativeClickListener,
+    modifier: Modifier,
+) {
+    val (group, promo, creative) = selection
 
-            FullHeight -> {
-                PromotionCreativeFullHeight(
-                    creative = creative,
-                    isDismissible = promo.isDismissible,
-                    modifier = modifier,
-                    onShown = {
-                        clickListener.onShown(selection)
-                    },
-                    onActionClick = {
-                        clickListener.onOpenAction(promo.actionUrl)
-                    },
-                    onDismissClick = {
-                        vegasPromoter.onDismiss()
-                        clickListener.onDismiss()
-                    },
-                )
-            }
+    when (group.cardType) {
+        Banner -> {
+            PromotionCreativeBanner(
+                creative = creative,
+                isDismissible = promo.isDismissible,
+                modifier = modifier,
+                onShown = {
+                    clickListener.onShown(selection)
+                },
+                onActionClick = {
+                    clickListener.onOpenAction(promo.actionUrl)
+                },
+            )
+        }
+
+        FullHeight -> {
+            PromotionCreativeFullHeight(
+                creative = creative,
+                isDismissible = promo.isDismissible,
+                modifier = modifier,
+                onShown = {
+                    clickListener.onShown(selection)
+                },
+                onActionClick = {
+                    clickListener.onOpenAction(promo.actionUrl)
+                },
+                onDismissClick = {
+                    clickListener.onDismiss()
+                },
+            )
         }
     }
 }
@@ -267,7 +274,7 @@ private fun PromotionCreativeFullHeight(
                     }
 
                     creative.bodyText?.let { body ->
-                         Text(
+                        Text(
                             text = body,
                             style = MaterialTheme.typography.body1
                         )

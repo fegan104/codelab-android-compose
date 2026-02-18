@@ -11,6 +11,7 @@ import com.fitnow.vegas.core.StringSourceKey
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
@@ -50,23 +51,19 @@ class MockVegasSourceKeyParser(rawJson: String) : SourceKeyParser<MockVegasDataS
             val entry = when (operatorToKeyType(rule.operator)) {
                 KeyType.INT -> {
                     val defaultValue = defaultElement?.jsonPrimitive?.intOrNull
-                        ?: MockVegasDataSource.DEFAULT_INT
                     MockSourceKeyEntry.IntEntry(source, key, whereParams, defaultValue)
                 }
                 KeyType.STRING -> {
                     val defaultValue = defaultElement?.jsonPrimitive?.content
-                        ?: MockVegasDataSource.DEFAULT_STRING
                     MockSourceKeyEntry.StringEntry(source, key, whereParams, defaultValue)
                 }
                 KeyType.BOOLEAN -> {
-                    @Suppress("KotlinConstantConditions")
                     val defaultValue = defaultElement?.jsonPrimitive?.booleanOrNull
-                        ?: MockVegasDataSource.DEFAULT_BOOLEAN
                     MockSourceKeyEntry.BooleanEntry(source, key, whereParams, defaultValue)
                 }
                 KeyType.STRING_SET -> {
-                    // StringSet defaults are rarely specified in JSON, use empty set
-                    MockSourceKeyEntry.StringSetEntry(source, key, whereParams, MockVegasDataSource.DEFAULT_STRING_SET)
+                    val defaultValue = defaultElement?.jsonArray?.toList()?.map { it.jsonPrimitive.content }?.toSet()
+                    MockSourceKeyEntry.StringSetEntry(source, key, whereParams, defaultValue)
                 }
             }
 
@@ -141,7 +138,7 @@ class MockVegasSourceKeyParser(rawJson: String) : SourceKeyParser<MockVegasDataS
  * Mock IntSourceKey that returns static value from MockVegasDataSource.
  */
 @Suppress("RedundantNullableReturnType")
-class MockIntSourceKey(
+data class MockIntSourceKey(
     val sourceName: String,
     val keyName: String,
     val whereParams: Map<String, String>? = null
@@ -155,7 +152,7 @@ class MockIntSourceKey(
  * Mock StringSourceKey that returns static value from MockVegasDataSource.
  */
 @Suppress("RedundantNullableReturnType")
-class MockStringSourceKey(
+data  class MockStringSourceKey(
     val sourceName: String,
     val keyName: String,
     val whereParams: Map<String, String>? = null
@@ -169,7 +166,7 @@ class MockStringSourceKey(
  * Mock BooleanSourceKey that returns static value from MockVegasDataSource.
  */
 @Suppress("RedundantNullableReturnType")
-class MockBooleanSourceKey(
+data class MockBooleanSourceKey(
     val sourceName: String,
     val keyName: String,
     val whereParams: Map<String, String>? = null
@@ -183,7 +180,7 @@ class MockBooleanSourceKey(
  * Mock StringSetSourceKey that returns static value from MockVegasDataSource.
  */
 @Suppress("RedundantNullableReturnType")
-class MockStringSetSourceKey(
+data class MockStringSetSourceKey(
     val sourceName: String,
     val keyName: String,
     val whereParams: Map<String, String>? = null

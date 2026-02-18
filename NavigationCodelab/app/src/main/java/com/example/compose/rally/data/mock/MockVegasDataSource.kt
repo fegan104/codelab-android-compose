@@ -1,5 +1,6 @@
 package com.example.compose.rally.data.mock
 
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import com.fitnow.vegas.core.QueryDataSource
@@ -12,17 +13,17 @@ import com.fitnow.vegas.core.QueryDataSource
 class MockVegasDataSource : QueryDataSource {
 
     // Storage maps for each value type, keyed by unique identifier
-    private val intValues: SnapshotStateMap<String, Int> = mutableStateMapOf()
-    private val stringValues: SnapshotStateMap<String, String> = mutableStateMapOf()
-    private val booleanValues: SnapshotStateMap<String, Boolean> = mutableStateMapOf()
-    private val stringSetValues: SnapshotStateMap<String, Set<String>> = mutableStateMapOf()
+    private val intValues: SnapshotStateMap<String, Int?> = mutableStateMapOf()
+    private val stringValues: SnapshotStateMap<String, String?> = mutableStateMapOf()
+    private val booleanValues: SnapshotStateMap<String, Boolean?> = mutableStateMapOf()
+    private val stringSetValues: SnapshotStateMap<String, Set<String>?> = mutableStateMapOf()
 
-    // Default values
-    companion object {
-        const val DEFAULT_INT = 1
-        const val DEFAULT_STRING = ""
-        const val DEFAULT_BOOLEAN = false
-        val DEFAULT_STRING_SET: Set<String> = emptySet()
+    // Version counter that increments on any change - used for recomposition triggers
+    private val _version = mutableIntStateOf(0)
+    override val version: Int get() = _version.intValue
+
+    private fun incrementVersion() {
+        _version.intValue++
     }
 
     /**
@@ -43,9 +44,9 @@ class MockVegasDataSource : QueryDataSource {
     /**
      * Returns the Int value for the given query, or the default if not set.
      */
-    fun getInt(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): Int {
+    fun getInt(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): Int? {
         val key = createKey(sourceName, keyName, whereParams)
-        return intValues[key] ?: DEFAULT_INT
+        return intValues[key]
     }
 
     /**
@@ -54,14 +55,15 @@ class MockVegasDataSource : QueryDataSource {
     fun setInt(sourceName: String, keyName: String, whereParams: Map<String, String>? = null, value: Int) {
         val key = createKey(sourceName, keyName, whereParams)
         intValues[key] = value
+        incrementVersion()
     }
 
     /**
      * Returns the String value for the given query, or the default if not set.
      */
-    fun getString(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): String {
+    fun getString(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): String? {
         val key = createKey(sourceName, keyName, whereParams)
-        return stringValues[key] ?: DEFAULT_STRING
+        return stringValues[key]
     }
 
     /**
@@ -70,14 +72,15 @@ class MockVegasDataSource : QueryDataSource {
     fun setString(sourceName: String, keyName: String, whereParams: Map<String, String>? = null, value: String) {
         val key = createKey(sourceName, keyName, whereParams)
         stringValues[key] = value
+        incrementVersion()
     }
 
     /**
      * Returns the Boolean value for the given query, or the default if not set.
      */
-    fun getBoolean(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): Boolean {
+    fun getBoolean(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): Boolean? {
         val key = createKey(sourceName, keyName, whereParams)
-        return booleanValues[key] ?: DEFAULT_BOOLEAN
+        return booleanValues[key]
     }
 
     /**
@@ -86,14 +89,15 @@ class MockVegasDataSource : QueryDataSource {
     fun setBoolean(sourceName: String, keyName: String, whereParams: Map<String, String>? = null, value: Boolean) {
         val key = createKey(sourceName, keyName, whereParams)
         booleanValues[key] = value
+        incrementVersion()
     }
 
     /**
      * Returns the StringSet value for the given query, or the default if not set.
      */
-    fun getStringSet(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): Set<String> {
+    fun getStringSet(sourceName: String, keyName: String, whereParams: Map<String, String>? = null): Set<String>? {
         val key = createKey(sourceName, keyName, whereParams)
-        return stringSetValues[key] ?: DEFAULT_STRING_SET
+        return stringSetValues[key]
     }
 
     /**
@@ -102,6 +106,7 @@ class MockVegasDataSource : QueryDataSource {
     fun setStringSet(sourceName: String, keyName: String, whereParams: Map<String, String>? = null, value: Set<String>) {
         val key = createKey(sourceName, keyName, whereParams)
         stringSetValues[key] = value
+        incrementVersion()
     }
 
     /**
@@ -134,6 +139,7 @@ class MockVegasDataSource : QueryDataSource {
             is MockSourceKeyEntry.BooleanEntry -> booleanValues[uniqueId] = entry.defaultValue
             is MockSourceKeyEntry.StringSetEntry -> stringSetValues[uniqueId] = entry.defaultValue
         }
+        incrementVersion()
     }
 
     /**
@@ -141,6 +147,7 @@ class MockVegasDataSource : QueryDataSource {
      */
     fun setIntByUniqueId(uniqueId: String, value: Int) {
         intValues[uniqueId] = value
+        incrementVersion()
     }
 
     /**
@@ -148,6 +155,7 @@ class MockVegasDataSource : QueryDataSource {
      */
     fun setStringByUniqueId(uniqueId: String, value: String) {
         stringValues[uniqueId] = value
+        incrementVersion()
     }
 
     /**
@@ -155,6 +163,7 @@ class MockVegasDataSource : QueryDataSource {
      */
     fun setBooleanByUniqueId(uniqueId: String, value: Boolean) {
         booleanValues[uniqueId] = value
+        incrementVersion()
     }
 
     /**
@@ -162,6 +171,7 @@ class MockVegasDataSource : QueryDataSource {
      */
     fun setStringSetByUniqueId(uniqueId: String, value: Set<String>) {
         stringSetValues[uniqueId] = value
+        incrementVersion()
     }
 
     /**
@@ -172,5 +182,6 @@ class MockVegasDataSource : QueryDataSource {
         stringValues.clear()
         booleanValues.clear()
         stringSetValues.clear()
+        incrementVersion()
     }
 }
