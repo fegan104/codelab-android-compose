@@ -38,4 +38,5 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:2.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
     implementation("com.squareup:kotlinpoet:2.0.0")
+    compileOnly("com.android.tools.build:gradle:8.13.1")
 }

@@ -1,10 +1,9 @@
 package com.fitnow.vegas.compiler
 
 import java.io.File
-import org.gradle.api.NamedDomainObjectContainer
+import com.android.build.gradle.BaseExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.tasks.SourceSetContainer
 
 /**
  * Vegas Gradle Plugin that generates type-safe Kotlin code from a JSON manifest.
@@ -56,11 +55,6 @@ class VegasPlugin : Plugin<Project> {
 
         // Wire generated sources into the build
         project.afterEvaluate {
-            // For Kotlin JVM projects
-            project.extensions.findByType(SourceSetContainer::class.java)?.let { sourceSets ->
-                sourceSets.findByName("main")?.java?.srcDir(outputDir)
-            }
-
             // For Android projects (configured via reflection to avoid AGP dependency)
             addAndroidSourceSet(project, outputDir.get().asFile)
 
@@ -73,18 +67,9 @@ class VegasPlugin : Plugin<Project> {
     }
 
     private fun addAndroidSourceSet(project: Project, outputDir: File) {
-        val androidExtension = project.extensions.findByName("android") ?: return
-        val sourceSets = androidExtension.javaClass.methods
-            .firstOrNull { it.name == "getSourceSets" }
-            ?.invoke(androidExtension) as? NamedDomainObjectContainer<*>
-            ?: return
-        val mainSourceSet = sourceSets.findByName("main") ?: return
-        val javaDirSet = mainSourceSet.javaClass.methods
-            .firstOrNull { it.name == "getJava" }
-            ?.invoke(mainSourceSet)
-            ?: return
-        javaDirSet.javaClass.methods
-            .firstOrNull { it.name == "srcDir" }
-            ?.invoke(javaDirSet, outputDir)
+        val androidExtension = project.extensions.findByName("android")
+        if (androidExtension is BaseExtension) {
+            androidExtension.sourceSets.findByName("main")?.java?.srcDir(outputDir)
+        }
     }
 }

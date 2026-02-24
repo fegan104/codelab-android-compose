@@ -41,7 +41,7 @@
         "key": "timesShown",
         "where": {
           "historyType": "group",
-          "id": "android-halloween-sale-premium"
+          "id": ""
         },
         "default": 0
       },

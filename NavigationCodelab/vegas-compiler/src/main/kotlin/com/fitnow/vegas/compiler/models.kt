@@ -4,6 +4,7 @@ import com.fitnow.vegas.core.PromotionGroupJson
 import com.fitnow.vegas.core.RuleJson
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * Supported key types for code generation.
@@ -35,6 +36,10 @@ internal fun PromotionGroupJson.extractSourcesAndKeys(): Map<String, Set<SourceK
         val source = rule.lhs.source
         val key = rule.lhs.key
         val keyType = inferKeyType(rule.operator)
+        val whereJson = rule.lhs.where
+        if (whereJson != null && whereJson.values.any { !it.jsonPrimitive.isString || it.jsonPrimitive.content.isEmpty() }) {
+            throw IllegalArgumentException("Where clause must have non-empty string values. Found $whereJson")
+        }
         val wherePropertyNames = rule.lhs.where?.keys?.toList() ?: emptyList()
         
         result.getOrPut(source) { mutableSetOf() }
